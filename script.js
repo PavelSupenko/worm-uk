@@ -43,7 +43,9 @@ function initializeEditButton() {
 function replaceNamesInText() {
     document.querySelectorAll('[data-name]').forEach(element => {
         const originalName = element.dataset.name;
-        const translation = names[originalName]?.singular?.nominative || originalName;
+        const nameForm = element.dataset.form || 'singular'; // за замовчуванням однина
+        const caseForm = element.dataset.case || 'nominative'; // за замовчуванням називний відмінок
+        const translation = names[originalName]?.[nameForm]?.[caseForm] || originalName;
         element.textContent = translation;
     });
 }
