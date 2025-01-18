@@ -2,7 +2,7 @@
 const names = JSON.parse(localStorage.getItem('customNames')) || {};
 
 // Завантаження перекладів за замовчуванням
-fetch('../assets/translations.json')
+fetch('assets/translations.json')
     .then(response => response.json())
     .then(defaultNames => {
         // Об'єднати імена з LocalStorage та початкових даних
