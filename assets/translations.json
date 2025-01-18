@@ -1,0 +1,20 @@
+{
+    "John": {
+        "singular": {
+            "nominative": "Джон",
+            "genitive": "Джона",
+            "dative": "Джону",
+            "accusative": "Джона",
+            "instrumental": "Джоном",
+            "locative": "Джоні"
+        },
+        "plural": {
+            "nominative": "Джони",
+            "genitive": "Джонів",
+            "dative": "Джонам",
+            "accusative": "Джонів",
+            "instrumental": "Джонами",
+            "locative": "Джонах"
+        }
+    }
+}
