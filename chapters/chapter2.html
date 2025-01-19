@@ -10,18 +10,23 @@
     <div id="container">
         <aside id="sidebar">
             <h2>Глави</h2>
+            <button id="toggle-sidebar">Згорнути</button> <!-- Кнопка для згортання бічної панелі -->
             <ul id="chapter-list">
                 <li><a href="chapter1.html">Глава 1</a></li>
                 <li><a href="chapter2.html">Глава 2</a></li>
+                <!-- Додайте більше глав -->
             </ul>
         </aside>
         <main id="content">
-            <h1>Глава 1</h1>
+            <h1>Глава 2</h1>
             <p id="chapter-text">
                 <span data-name="John" data-form="singular" data-case="nominative">Джон</span> ішов через ліс. Він зупинився біля старого дуба і подумав: 
                 "Чи варто продовжувати шлях?". 
                 Але <span data-name="John" data-form="singular" data-case="accusative">Джон</span> вирішив йти далі, не зважаючи на втому.
-            </p>            
+            </p>   
+            
+            <!-- Кнопка для повернення на головну -->
+            <a href="../index.html" id="back-to-home">Повернутися на головну</a>
         </main>
     </div>
     <button id="edit-names">Редагувати імена</button>

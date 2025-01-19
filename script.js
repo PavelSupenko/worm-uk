@@ -13,10 +13,8 @@ fetch('../assets/translations.json') // Шлях виправлено на asset
         // Злиття імен з користувацькими та дефолтними, з пріоритетом на користувацькі
         for (let name in defaultNames) {
             if (names[name]) {
-                // Якщо є користувацьке ім'я, залишаємо його, якщо ні - використовуємо дефолтне
                 names[name] = { ...defaultNames[name], ...names[name] };
             } else {
-                // Якщо користувацького імені нема, просто використовуємо дефолтне
                 names[name] = defaultNames[name];
             }
         }
@@ -26,7 +24,18 @@ fetch('../assets/translations.json') // Шлях виправлено на asset
         console.error('Не вдалося завантажити translations.json:', error);
     });
 
-// Редагування імен
+// Функція для заміни імен у тексті
+function replaceNamesInText() {
+    document.querySelectorAll('[data-name]').forEach(element => {
+        const originalName = element.dataset.name;
+        const nameForm = element.dataset.form || 'singular'; // за замовчуванням однина
+        const caseForm = element.dataset.case || 'nominative'; // за замовчуванням називний відмінок
+        const translation = names[originalName]?.[nameForm]?.[caseForm] || originalName;
+        element.textContent = translation;
+    });
+}
+
+// ініціалізація кнопки редагування
 function initializeEditButton() {
     const editButton = document.getElementById('edit-names');
     if (editButton) {
@@ -47,16 +56,19 @@ function initializeEditButton() {
     }
 }
 
-// Функція для заміни імен у тексті
-function replaceNamesInText() {
-    document.querySelectorAll('[data-name]').forEach(element => {
-        const originalName = element.dataset.name;
-        const nameForm = element.dataset.form || 'singular'; // за замовчуванням однина
-        const caseForm = element.dataset.case || 'nominative'; // за замовчуванням називний відмінок
-        const translation = names[originalName]?.[nameForm]?.[caseForm] || originalName;
-        element.textContent = translation;
-    });
+// Згортання/розгортання бічної панелі
+function initializeSidebarToggle() {
+    const toggleButton = document.getElementById('toggle-sidebar');
+    const sidebar = document.getElementById('sidebar');
+    if (toggleButton) {
+        toggleButton.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            toggleButton.textContent = sidebar.classList.contains('collapsed') ? 'Розгорнути' : 'Згорнути';
+        });
+    }
 }
 
-// Викликати функцію для ініціалізації кнопки редагування лише якщо вона існує
+// Викликати функцію для ініціалізації кнопки редагування та бічної панелі
 initializeEditButton();
+initializeSidebarToggle();
+replaceNamesInText();
