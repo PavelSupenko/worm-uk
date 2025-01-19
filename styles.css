@@ -9,21 +9,25 @@ body {
     display: flex;
     flex-direction: row;
     width: 100%;
+    position: relative; /* Для коректної роботи позиціонування кнопки */
 }
 #sidebar {
     width: 20%;
     background-color: #3e3e3e;
     color: #f5f5f5;
     padding: 20px;
-    transition: width 0.3s ease; /* Плавна зміна ширини при згортанні */
+    transition: width 0.3s ease, opacity 0.3s ease;
+    margin-top: 40px; /* Відступ від верхнього краю сторінки */
 }
 
-/* Згорнуте меню */
+/* Згорнуте меню (повне приховування) */
 #sidebar.collapsed {
-    width: 60px; /* Менше місця для згортання */
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
 }
 
-/* Кнопка для згортання */
+/* Кнопка для згортання розташовується окремо */
 #toggle-sidebar {
     background-color: #ffb74d;
     color: white;
@@ -31,8 +35,10 @@ body {
     border: none;
     cursor: pointer;
     border-radius: 5px;
-    margin-bottom: 10px;
-    display: block;
+    position: absolute;
+    top: 20px; /* Визначаємо розташування кнопки згортання в верхній частині */
+    left: 20px;
+    z-index: 100; /* Кнопка буде поверх панелі */
 }
 
 #toggle-sidebar:hover {
@@ -45,21 +51,27 @@ body {
     background-color: #2a2a2a;
     color: #d8d8d8;
     border-radius: 8px;
+    margin-top: 40px; /* Відступ для контенту, щоб не перекривати кнопку */
 }
-#edit-names {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    background-color: #ffb74d;
+#edit-names, #back-to-home {
+    background-color: #ffeb3b;
     color: #3e3e3e;
     border: none;
     padding: 10px 20px;
     cursor: pointer;
     border-radius: 5px;
+    margin-right: 10px;
+    display: inline-block;
 }
-#edit-names:hover {
+
+#edit-names:hover, #back-to-home:hover {
     background-color: #ff9800;
 }
+
+#back-to-home {
+    background-color: #ffeb3b;
+}
+
 h1, h2 {
     color: #ffeb3b;
 }
@@ -69,19 +81,4 @@ a {
 }
 a:hover {
     color: #ffb74d;
-}
-
-/* Стилі для кнопки "Повернутися на головну" */
-#back-to-home {
-    background-color: #3f51b5;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 5px;
-    display: inline-block;
-    margin-top: 20px;
-}
-
-#back-to-home:hover {
-    background-color: #303f9f;
 }
