@@ -10,9 +10,17 @@ fetch('../assets/translations.json') // Шлях виправлено на asset
         return response.json();
     })
     .then(defaultNames => {
-        // Об'єднати імена з LocalStorage та початкових даних
-        Object.assign(names, defaultNames);
-        replaceNamesInText();
+        // Злиття імен з користувацькими та дефолтними, з пріоритетом на користувацькі
+        for (let name in defaultNames) {
+            if (names[name]) {
+                // Якщо є користувацьке ім'я, залишаємо його, якщо ні - використовуємо дефолтне
+                names[name] = { ...defaultNames[name], ...names[name] };
+            } else {
+                // Якщо користувацького імені нема, просто використовуємо дефолтне
+                names[name] = defaultNames[name];
+            }
+        }
+        replaceNamesInText(); // Заміна імен після злиття
     })
     .catch(error => {
         console.error('Не вдалося завантажити translations.json:', error);
@@ -52,4 +60,3 @@ function replaceNamesInText() {
 
 // Викликати функцію для ініціалізації кнопки редагування лише якщо вона існує
 initializeEditButton();
-replaceNamesInText();
