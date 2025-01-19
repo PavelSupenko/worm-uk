@@ -52,3 +52,4 @@ function replaceNamesInText() {
 
 // Викликати функцію для ініціалізації кнопки редагування лише якщо вона існує
 initializeEditButton();
+replaceNamesInText();
