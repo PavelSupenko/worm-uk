@@ -2,7 +2,7 @@
 const names = JSON.parse(localStorage.getItem('customNames')) || {};
 
 // Завантаження перекладів за замовчуванням
-fetch('../assets/translations.json') // Шлях виправлено на assets/translations.json
+fetch('assets/translations.json') // Шлях виправлено на assets/translations.json
     .then(response => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -25,7 +25,7 @@ fetch('../assets/translations.json') // Шлях виправлено на asset
     });
 
 // Завантаження списку глав у бокову панель
-fetch('../assets/chapters_config.json')
+fetch('assets/chapters_config.json')
     .then(response => response.json())
     .then(config => {
         const chapterList = document.getElementById('chapter-list');
