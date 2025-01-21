@@ -81,8 +81,8 @@ function initializePage() {
 function replaceNamesInText() {
     document.querySelectorAll('[data-name]').forEach(element => {
         const originalName = element.dataset.name;
-        const nameForm = element.dataset.form || 'singular'; // за замовчуванням однина
-        const caseForm = element.dataset.case || 'nominative'; // за замовчуванням називний відмінок
+        const nameForm = element.dataset.form || 'однина'; // за замовчуванням однина
+        const caseForm = element.dataset.case || 'називний'; // за замовчуванням називний відмінок
         const translation = names[originalName]?.[nameForm]?.[caseForm] || originalName;
         element.textContent = translation;
     });

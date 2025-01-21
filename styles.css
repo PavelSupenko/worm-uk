@@ -85,7 +85,12 @@ a:hover {
     color: #ffb74d;
 }
 
-[data-name="John"] {
-    color: #CDF7F6;
+[data-name] {
+    color: #fff7b4;
+    /*font-weight: bold;*/
+}
+
+[character-name] {
+    color: #e9ebb5;
     /*font-weight: bold;*/
 }
