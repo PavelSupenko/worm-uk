@@ -1,0 +1,14 @@
+{
+    "chapters": [
+        {
+            "id": "chapter1",
+            "title": "Глава 1",
+            "textFile": "texts/chapter1_text.html"
+        },
+        {
+            "id": "chapter2",
+            "title": "Глава 2",
+            "textFile": "texts/chapter2_text.html"
+        }
+    ]
+}

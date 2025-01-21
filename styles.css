@@ -25,12 +25,14 @@ body {
     width: 0;
     opacity: 0;
     pointer-events: none;
+    padding: 0px;
+    margin-top: 0px;
 }
 
 /* Кнопка для згортання розташовується окремо */
 #toggle-sidebar {
-    background-color: #ffb74d;
-    color: white;
+    background-color: #0E0E0E;
+    color: #A7BED3;
     padding: 10px;
     border: none;
     cursor: pointer;
@@ -42,7 +44,7 @@ body {
 }
 
 #toggle-sidebar:hover {
-    background-color: #ff9800;
+    background-color: #0E0E0E;
 }
 
 #content {
@@ -81,4 +83,9 @@ a {
 }
 a:hover {
     color: #ffb74d;
+}
+
+[data-name="John"] {
+    color: #CDF7F6;
+    /*font-weight: bold;*/
 }
