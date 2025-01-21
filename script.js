@@ -45,7 +45,7 @@ fetch('assets/chapters_config.json')
             const chapterConfig = config.chapters.find(ch => ch.id === chapterId);
             if (chapterConfig) {
                 document.getElementById('chapter-title').textContent = chapterConfig.title;
-                fetch(`../${chapterConfig.textFile}`)
+                fetch(chapterConfig.textFile)
                     .then(response => response.text())
                     .then(text => {
                         document.getElementById('chapter-text').innerHTML = text;
