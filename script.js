@@ -25,7 +25,7 @@ fetch('../assets/translations.json') // Шлях виправлено на asset
     });
 
 // Завантаження списку глав у бокову панель
-fetch('../chapters_config.json')
+fetch('../assets/chapters_config.json')
     .then(response => response.json())
     .then(config => {
         const chapterList = document.getElementById('chapter-list');
