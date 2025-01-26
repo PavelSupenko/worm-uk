@@ -116,7 +116,7 @@ function initializeSidebarToggle() {
     if (toggleButton) {
         toggleButton.addEventListener('click', () => {
             sidebar.classList.toggle('collapsed');
-            toggleButton.textContent = sidebar.classList.contains('collapsed') ? 'Зміст' : 'Зміст';
+            toggleButton.textContent = sidebar.classList.contains('collapsed') ? 'Розгорнути зміст' : 'Згорнути зміст';
         });
     }
 }

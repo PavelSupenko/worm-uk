@@ -12,7 +12,7 @@ body {
     position: relative; /* Для коректної роботи позиціонування кнопки */
 }
 #sidebar {
-    width: 20%;
+    width: 40%;
     background-color: #3e3e3e;
     color: #f5f5f5;
     padding: 20px;
@@ -48,12 +48,16 @@ body {
 }
 
 #content {
+    margin: 20px auto; /* Центрування на великих екранах */
     flex-grow: 1;
     padding: 20px;
-    background-color: #2a2a2a;
+    background-color: #262525;
     color: #d8d8d8;
     border-radius: 8px;
     margin-top: 40px; /* Відступ для контенту, щоб не перекривати кнопку */
+
+    width: 100%; /* За замовчуванням займає всю ширину */
+    max-width: 90%; /* Для мобільних пристроїв */
 }
 #edit-names, #back-to-home {
     background-color: #ffeb3b;
@@ -86,11 +90,18 @@ a:hover {
 }
 
 [data-name] {
-    color: #fff7b4;
+    color: #ffeb3b;
     /*font-weight: bold;*/
 }
 
 [character-name] {
-    color: #e9ebb5;
+    color: #ffef5f;
     /*font-weight: bold;*/
+}
+
+/* Для великих екранів */
+@media (min-width: 1024px) {
+    #content {
+        max-width: 50%; /* Зменшення ширини до 60% */
+    }
 }
