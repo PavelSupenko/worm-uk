@@ -58,7 +58,7 @@ fetch('assets/chapters_config.json')
                     const audioContainer = document.getElementById('audio-container');
                     const audioPlayer = document.createElement('audio');
                     audioPlayer.controls = true;
-                    audioPlayer.src = `audio/${chapterConfig.audioFile}`;
+                    audioPlayer.src = chapterConfig.audioFile;
                     audioPlayer.type = 'audio/mpeg';
                     audioContainer.appendChild(audioPlayer);
                 }
