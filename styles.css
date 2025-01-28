@@ -59,23 +59,53 @@ body {
     width: 100%; /* За замовчуванням займає всю ширину */
     max-width: 90%; /* Для мобільних пристроїв */
 }
+
+#buttons-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+#buttons-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px; /* Відступ між кнопками */
+    margin-top: 20px;
+}
+
 #edit-names, #back-to-home {
     background-color: #ffeb3b;
     color: #3e3e3e;
     border: none;
-    padding: 10px 20px;
+    padding: 12px 24px;
     cursor: pointer;
     border-radius: 5px;
-    margin-right: 10px;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-width: 140px;
+    height: 50px;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
 }
 
 #edit-names:hover, #back-to-home:hover {
     background-color: #ff9800;
 }
 
-#back-to-home {
-    background-color: #ffeb3b;
+/*#audio-container {
+    margin-top: 20px;
+    padding: 10px;
+    background: #f8f9fa;
+    border: 1px solid #b0b8c1;
+    border-radius: 8px;
+}*/
+#audio-container audio {
+    width: 80%;
 }
 
 h1, h2 {
@@ -103,5 +133,18 @@ a:hover {
 @media (min-width: 1024px) {
     #content {
         max-width: 50%; /* Зменшення ширини до 60% */
+    }
+}
+
+/* Для мобільних пристроїв */
+@media (max-width: 480px) {
+    #buttons-container {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    #edit-names, #back-to-home {
+        min-width: 120px;
+        height: 45px;
     }
 }

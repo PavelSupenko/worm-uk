@@ -52,6 +52,16 @@ fetch('assets/chapters_config.json')
                         replaceNamesInText(); // Заміна імен у тексті
                     })
                     .catch(err => console.error('Помилка завантаження тексту:', err));
+
+                // Додавання аудіоплеєра, якщо файл існує
+                if (chapterConfig.audioFile) {
+                    const audioContainer = document.getElementById('audio-container');
+                    const audioPlayer = document.createElement('audio');
+                    audioPlayer.controls = true;
+                    audioPlayer.src = `../${chapterConfig.audioFile}`;
+                    audioPlayer.type = 'audio/mpeg';
+                    audioContainer.appendChild(audioPlayer);
+                }
             } else {
                 console.error('Глава не знайдена.');
             }
@@ -105,6 +115,13 @@ function initializeEditButton() {
                     alert("Помилка в форматі JSON!");
                 }
             }
+        });
+    }
+
+    const homeButton = document.getElementById('back-to-home');
+    if (homeButton) {
+        homeButton.addEventListener('click', function() {
+            window.location.href = "index.html";
         });
     }
 }

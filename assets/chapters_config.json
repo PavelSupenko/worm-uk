@@ -4,7 +4,15 @@
             "global_id": "gestation",
             "id": "chapter1",
             "title": "Визрівання 1.1",
-            "textFile": "texts/chapter1_text.html"
+            "textFile": "texts/chapter1_text.html",
+            "audioFile": "audio/1.1.mp3"
+        },
+        {
+            "global_id": "gestation",
+            "id": "chapter2",
+            "title": "Визрівання 1.2",
+            "textFile": "texts/chapter2_text.html",
+            "audioFile": null
         }
     ]
 }
