@@ -25,57 +25,97 @@ fetch('assets/translations.json') // Шлях виправлено на assets/t
     });
 
 // Завантаження списку глав у бокову панель
-fetch('assets/chapters_config.json')
+fetch('assets/chapters.json')
     .then(response => response.json())
-    .then(config => {
+    .then(majorChapters => {
         const chapterList = document.getElementById('chapter-list');
-        config.chapters.forEach(chapter => {
-            const listItem = document.createElement('li');
-            const link = document.createElement('a');
-            link.href = `chapter_template.html?chapter=${chapter.id}`;
-            link.textContent = chapter.title;
-            listItem.appendChild(link);
-            chapterList.appendChild(listItem);
+
+        majorChapters.forEach(majorChapter => {
+            // Створюємо li для основної глави
+            const majorLi = document.createElement('li');
+            majorLi.textContent = `${majorChapter.id}. ${majorChapter.title}`;
+            chapterList.appendChild(majorLi);
+
+            // Створюємо вкладений ul для підглав
+            const subUl = document.createElement('ul');
+            majorLi.appendChild(subUl);
+
+            // Додаємо підглави
+            majorChapter.chapters.forEach(subChapter => {
+                const subLi = document.createElement('li');
+                const link = document.createElement('a');
+
+                // Формуємо посилання з двома параметрами: major та sub
+                // Наприклад: chapter_template.html?major=1&sub=1.1
+                link.href = `chapter_template.html?major=${majorChapter.id}&sub=${subChapter.id}`;
+
+                // Текст посилання — лише "1.1", "1.2" і т.д.
+                link.textContent = subChapter.id;
+
+                subLi.appendChild(link);
+                subUl.appendChild(subLi);
+            });
         });
 
-        // Завантаження даних для конкретної глави
-        const urlParams = new URLSearchParams(window.location.search);
-        const chapterId = urlParams.get('chapter');
-        if (chapterId) {
-            const chapterConfig = config.chapters.find(ch => ch.id === chapterId);
-            if (chapterConfig) {
-                document.getElementById('chapter-title').textContent = chapterConfig.title;
-                fetch(chapterConfig.textFile)
-                    .then(response => response.text())
-                    .then(text => {
-                        document.getElementById('chapter-text').innerHTML = text;
-                        replaceNamesInText(); // Заміна імен у тексті
-                    })
-                    .catch(err => console.error('Помилка завантаження тексту:', err));
-
-                // Додавання аудіоплеєра, якщо файл існує
-                if (chapterConfig.audioFile) {
-                    const audioContainer = document.getElementById('audio-container');
-                    const audioPlayer = document.createElement('audio');
-                    audioPlayer.controls = true;
-                    audioPlayer.src = chapterConfig.audioFile;
-                    audioPlayer.type = 'audio/mpeg';
-                    audioContainer.appendChild(audioPlayer);
-                }
-            } else {
-                console.error('Глава не знайдена.');
-            }
-        }
+        // Після побудови меню обробляємо URL, щоб завантажити потрібну підглаву
+        loadChapter(majorChapters);
     })
     .catch(err => console.error('Помилка завантаження конфігурації глав:', err));
 
+function loadChapter(majorChapters) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const majorId = urlParams.get('major'); // Напр. "1"
+    const subId = urlParams.get('sub');     // Напр. "1.1"
+
+    // Якщо параметрів немає, нічого не робимо (можливо, це головна сторінка)
+    if (!majorId || !subId) return;
+
+    // Знаходимо основну главу
+    const majorChapterConfig = majorChapters.find(ch => ch.id === majorId);
+    if (!majorChapterConfig) {
+        console.error('Основна глава не знайдена:', majorId);
+        return;
+    }
+
+    // Знаходимо підглаву
+    const subChapterConfig = majorChapterConfig.chapters.find(sub => sub.id === subId);
+    if (!subChapterConfig) {
+        console.error('Підглава не знайдена:', subId);
+        return;
+    }
+
+    // Формуємо заголовок: "Визрівання 1.1"
+    const chapterTitle = document.getElementById('chapter-title');
+    chapterTitle.textContent = `${majorChapterConfig.title} ${subChapterConfig.id}`;
+
+    // Завантажуємо файл із текстом
+    fetch(subChapterConfig.textFile)
+        .then(response => response.text())
+        .then(text => {
+            document.getElementById('chapter-text').innerHTML = text;
+            replaceNamesInText(); // ваша функція для заміни імен
+        })
+        .catch(err => console.error('Помилка завантаження тексту:', err));
+
+    // Аудіо, якщо воно є
+    if (subChapterConfig.audioFile) {
+        const audioContainer = document.getElementById('audio-container');
+        // Очищаємо контейнер на випадок, якщо вже був інший аудіоплеєр
+        audioContainer.innerHTML = '';
+        const audioPlayer = document.createElement('audio');
+        audioPlayer.controls = true;
+        audioPlayer.src = subChapterConfig.audioFile;
+        audioPlayer.type = 'audio/mpeg';
+        audioContainer.appendChild(audioPlayer);
+    }
+}
 
 
 // Функція для ініціалізації заголовка та тексту для кожної глави
 function initializePage() {
     const chapterTitle = document.getElementById('chapter-title');
     const chapterText = document.getElementById('chapter-text');
-    
+
     // Оновлення заголовку та тексту для конкретної глави
     if (window.location.pathname.includes('chapter1.html')) {
         chapterTitle.textContent = 'Глава 1';
@@ -120,7 +160,7 @@ function initializeEditButton() {
 
     const homeButton = document.getElementById('back-to-home');
     if (homeButton) {
-        homeButton.addEventListener('click', function() {
+        homeButton.addEventListener('click', function () {
             window.location.href = "index.html";
         });
     }
