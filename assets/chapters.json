@@ -1,0 +1,18 @@
+[
+    {
+        "id": "1",
+        "title": "Визрівання",
+        "chapters": [
+            {
+                "id": "1.1",
+                "textFile": "texts/1.gestation/1.1.html",
+                "audioFile": "audio/1.gestation/1.1.mp3"
+            },
+            {
+                "id": "1.2",
+                "textFile": "texts/1.gestation/1.2.html",
+                "audioFile": "audio/1.gestation/1.2.mp3"
+            }
+        ]
+    }
+]
