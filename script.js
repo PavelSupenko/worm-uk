@@ -172,8 +172,8 @@ function initializeSidebarToggle() {
     const sidebar = document.getElementById('sidebar');
     if (toggleButton) {
         toggleButton.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            toggleButton.textContent = sidebar.classList.contains('collapsed') ? 'Розгорнути зміст' : 'Згорнути зміст';
+            sidebar.classList.toggle('active');
+            toggleButton.textContent = sidebar.classList.contains('active') ? 'Сховати зміст' : 'Показати зміст';
         });
     }
 }

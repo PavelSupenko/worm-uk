@@ -6,41 +6,42 @@ body {
     display: flex;
 }
 #container {
-    display: flex;
-    flex-direction: row;
+    position: relative;  /* Щоб всі елементи в ньому могли коректно позиціонуватися */
     width: 100%;
-    position: relative; /* Для коректної роботи позиціонування кнопки */
+    /* Можна прибрати display: flex, якщо він більше не потрібен для розташування */
 }
 #sidebar {
-    width: 40%;
+    position: fixed;           /* Фіксуємо панель поверх контенту */
+    top: 0px;
+    left: 0;
+    width: 300px;              /* Фіксована ширина, яку можна регулювати */
+    height: 100%;
     background-color: #3e3e3e;
     color: #f5f5f5;
     padding: 20px;
-    transition: width 0.3s ease, opacity 0.3s ease;
-    margin-top: 40px; /* Відступ від верхнього краю сторінки */
+    padding-top: 50px;
+    z-index: 1000;             /* Високий z-index, щоб панель була поверх */
+    transform: translateX(-100%); /* Ховаємо панель зліва за допомогою трансформації */
+    transition: transform 0.3s ease;
 }
 
 /* Згорнуте меню (повне приховування) */
-#sidebar.collapsed {
-    width: 0;
-    opacity: 0;
-    pointer-events: none;
-    padding: 0px;
-    margin-top: 0px;
+#sidebar.active {
+    transform: translateX(0); /* Панель з’являється */
 }
 
 /* Кнопка для згортання розташовується окремо */
 #toggle-sidebar {
+    position: fixed;
+    top: 10px;
+    left: 20px;
+    z-index: 1100;         /* Вище, ніж у панелі */
     background-color: #0E0E0E;
     color: #A7BED3;
     padding: 10px;
     border: none;
     cursor: pointer;
     border-radius: 5px;
-    position: absolute;
-    top: 20px; /* Визначаємо розташування кнопки згортання в верхній частині */
-    left: 20px;
-    z-index: 100; /* Кнопка буде поверх панелі */
 }
 
 #toggle-sidebar:hover {
@@ -48,16 +49,14 @@ body {
 }
 
 #content {
-    margin: 20px auto; /* Центрування на великих екранах */
-    flex-grow: 1;
+    margin: 20px auto;
     padding: 20px;
     background-color: #262525;
     color: #d8d8d8;
     border-radius: 8px;
-    margin-top: 40px; /* Відступ для контенту, щоб не перекривати кнопку */
-
-    width: 100%; /* За замовчуванням займає всю ширину */
-    max-width: 90%; /* Для мобільних пристроїв */
+    margin-top: 50px;
+    width: 100%;         /* Контент займає всю доступну ширину */
+    max-width: 90%;      /* Для мобільних пристроїв; для ПК можна змінити на, наприклад, 50-60% */
 }
 
 #buttons-container {
