@@ -1,49 +1,67 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Переклад твору</title>
+    <title>Worm — український переклад</title>
+    <meta name="description" content="Український переклад вебсеріалу Worm від Wildbow з озвучкою.">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,400;0,700;1,400&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="js/boot.js"></script>
+    <script type="module" src="js/home.js"></script>
 </head>
 <body>
-    <div id="container">
-        <main id="content">
-            <h1>Ласкаво просимо!</h1>
-            <p>Оберіть главу з меню, щоб почати читати.</p>
-            <section id="author-info">
-                <h2>Інформація про автора</h2>
-                <p><strong>Оригінальний текст належить John C. McCrae (також відомий як Wildbow).</strong></p>
-                <p>Підтримати оригінального автора можна за наступними посиланнями:</p>
-                <ul>
-                    <li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=N8CJRXJVWVZL6" target="_blank">Підтримати через PayPal</a></li>
-                    <li><a href="https://www.patreon.com/Wildbow" target="_blank">Підтримати через Patreon</a></li>
-                </ul>
-                <p>Оригінальний текст можна знайти за посиланням:</p>
-                <ul>
-                    <li><a href="https://parahumans.wordpress.com/" target="_blank">WORM</a></li>
-                </ul>
-                <p>Автор цього перекладу робить це лише з благими намірами, щоб ознайомити українську публіку з твором, і відмовляється від будь-яких прав на персонажів або сеттінг.</p>
-                
-                <h3>Information about author</h3>
+    <header class="topbar" id="topbar">
+        <a class="topbar-brand" href="index.html">Worm <span>українською</span></a>
+        <button class="icon-button" id="open-settings" aria-label="Налаштування">
+            <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#sliders"></use></svg>
+        </button>
+    </header>
+
+    <main class="page">
+        <section class="hero">
+            <h1 class="hero-title">Worm</h1>
+            <p class="hero-lead">Український переклад вебсеріалу Wildbow — з текстом і озвучкою.</p>
+            <a class="button button--large" id="continue" href="#toc" hidden></a>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Зміст</h2>
+            <div class="toc toc--grid" id="toc"></div>
+        </section>
+
+        <section class="section author" id="author-info">
+            <h2 class="section-title">Інформація про автора</h2>
+            <p><strong>Оригінальний текст належить John C. McCrae (також відомий як Wildbow).</strong></p>
+            <p>Підтримати оригінального автора можна за наступними посиланнями:</p>
+            <ul>
+                <li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=N8CJRXJVWVZL6" target="_blank" rel="noopener">Підтримати через PayPal</a></li>
+                <li><a href="https://www.patreon.com/Wildbow" target="_blank" rel="noopener">Підтримати через Patreon</a></li>
+            </ul>
+            <p>Оригінальний текст можна знайти за посиланням:</p>
+            <ul>
+                <li><a href="https://parahumans.wordpress.com/" target="_blank" rel="noopener">WORM</a></li>
+            </ul>
+            <p>Автор цього перекладу робить це лише з благими намірами, щоб ознайомити українську публіку з твором, і відмовляється від будь-яких прав на персонажів або сеттінг.</p>
+
+            <h3 lang="en">Information about author</h3>
+            <div lang="en">
                 <p><strong>The original text belongs to John C. McCrae a.k.a. Wildbow.</strong></p>
                 <p>You can support the original author at the following links:</p>
                 <ul>
-                    <li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=N8CJRXJVWVZL6" target="_blank">Support via PayPal</a></li>
-                    <li><a href="https://www.patreon.com/Wildbow" target="_blank">Support via Patreon</a></li>
+                    <li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=N8CJRXJVWVZL6" target="_blank" rel="noopener">Support via PayPal</a></li>
+                    <li><a href="https://www.patreon.com/Wildbow" target="_blank" rel="noopener">Support via Patreon</a></li>
                 </ul>
                 <p>Original text can be found by link:</p>
                 <ul>
-                    <li><a href="https://parahumans.wordpress.com/" target="_blank">WORM</a></li>
+                    <li><a href="https://parahumans.wordpress.com/" target="_blank" rel="noopener">WORM</a></li>
                 </ul>
                 <p>The translator of this work does it solely with good intentions to introduce the work to the Ukrainian audience and renounces any rights to the characters or setting.</p>
-            </section>
-
-            <h2>Глави</h2>
-            <ul id="chapter-list"></ul>
-        </main>
-    </div>
-    <script src="script.js"></script>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
