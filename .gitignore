@@ -5,3 +5,6 @@ __pycache__/
 tts/*.json
 !tts/voices.json
 !tts/*.tagged.json
+
+# Voice comparison samples, local only
+tts/samples/
