@@ -538,11 +538,11 @@ dialog.drawer::backdrop { background: rgb(0 0 0 / 0.5); }
     line-height: var(--reader-leading);
     overflow-wrap: break-word;
 }
-.chapter-text > p:first-child { margin-top: 0; }
+.chapter-text p { margin: 0 0 1em; }
 
 .loading { color: var(--muted); }
 
-:root[data-highlight-names="on"] .chapter-text [character-name],
+:root[data-highlight-names="on"] .chapter-text [data-character],
 :root[data-highlight-names="on"] .chapter-text [data-name] {
     color: var(--name);
 }

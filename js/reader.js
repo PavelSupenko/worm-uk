@@ -56,8 +56,6 @@ async function main() {
     }
     const article = $('chapter-text');
     article.innerHTML = html;
-    // Chapter fragments carry their own id="chapter-text"; drop the duplicate
-    article.querySelector('#chapter-text')?.removeAttribute('id');
     applyNames(article);
     initNamePopover(article, {
         onCustomize: key => openSettings({ tab: 'names', nameKey: key })

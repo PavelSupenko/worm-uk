@@ -15,11 +15,16 @@ python3 -m http.server 8000
 # then open http://localhost:8000/ or e.g. http://localhost:8000/chapter_template.html?ch=1.5
 ```
 
-Before committing changes to chapters or names, run the markup validator (stdlib Python, no dependencies). It exits with code 1 on errors; `--fix` also rewrites the `firstSeen` values in `names.json`:
+The tools in `tools/` are stdlib Python 3.8+ with no dependencies (shared code in `tools/chapterlib.py`):
 
 ```
-python3 tools/check_chapters.py [--fix]
+python3 tools/check_chapters.py [--fix]          # validate all chapters; --fix also updates firstSeen in names.json
+python3 tools/markup_names.py <id> [--write]     # wrap unmarked names in data-name spans, case taken from the form
+python3 tools/export_tts.py <id>                 # voiceover script for ElevenLabs -> tts/<id>.json
+python3 tools/export_tts.py <id> --check tts/<id>.tagged.json
 ```
+
+Run the validator before committing changes to chapters or names; it exits with code 1 on errors. Two project skills cover the content workflow: `.claude/skills/translate-chapter` (translate a new chapter straight into the markup) and `.claude/skills/tts-tags` (add ElevenLabs audio tags for the voiceover). `ROADMAP.md` tracks planned work.
 
 The live site is served by GitHub Pages from `origin` (`PavelSupenko/worm-uk`, default branch `master`). Assume a push to `master` goes live.
 
@@ -32,28 +37,25 @@ The live site is served by GitHub Pages from `origin` (`PavelSupenko/worm-uk`, d
 
 ## Chapter text markup
 
-Chapter files are HTML fragments, not full documents. Each one is a single `<p id="chapter-text">` (the reader drops the duplicate id when injecting it) containing narrator blocks, and paragraphs are `<span>` elements separated by `<br><br>`:
+Chapter files are HTML fragments, not full documents, in a canonical format the tools read and write: one `<div data-narrator>` with one `<p>` per line.
 
 ```html
-<p id="chapter-text">
-    <span reader-name="Taylor">
-        <span>Paragraph…</span>
-        <br>
-        <br>
-        <span>Paragraph with <span character-name="Lung">Лун</span> and <span data-name="Grue" data-form="однина" data-case="родовий">Морока</span>.</span>
-    </span>
-</p>
+<div data-narrator="Taylor">
+    <p>Narration with <span data-character="Emma">Емма</span> and <span data-name="Grue" data-case="родовий">Морока</span>.</p>
+    <p><span data-voice="Brian">“Direct speech,”</span> — said <span data-name="Grue">Морок</span>.</p>
+    <p data-voice="Reader">A paragraph entirely in another voice, e.g. an author's note.</p>
+</div>
 ```
 
-The three name attributes do different things:
-
-- **`reader-name="<English name>"`** marks who is narrating or speaking a block (`Reader` for author notes and neutral narration). Nothing reads it at runtime. It's there for later processing such as multi-voice audio.
-- **`character-name="<English name>"`** is styling only (highlighted by CSS unless the reader turns highlighting off). Its Ukrainian text is written inline and is never replaced. Use it for civilian names (Taylor, Emma, Danny…) and for descriptions that stand in for a cape ("маска-череп").
+- **`data-narrator`** on the root is the voice of everything not marked otherwise: `Taylor` in her chapters, the POV character or `Reader` (neutral) in interludes.
+- **`data-voice`** marks speech by someone other than the narrator: on a `<span>` around the quoted words (the attribution stays with the narrator), or on a `<p>` that is entirely that voice. Voices are keys of `tts/voices.json`. Nothing reads them at runtime; they drive the multi-voice voiceover.
+- **`data-character="<English name>"`** is styling only (highlighted unless the reader turns highlighting off) and is never replaced. Use it for civilian names (Taylor, Emma, Danny…) and for descriptions that stand in for a cape ("маска-череп").
 - **`data-name="<key>"`** is for every name that has variants: capes, teams and organizations, terms. At runtime `applyNames()` in `js/names.js` replaces the span's text with the key's form in the reader's chosen name set, and the span becomes clickable (opens the name popover).
-  - `data-form` must be `однина` or `множина`. `data-case` must be one of the seven Ukrainian case names (`називний`, `родовий`, `давальний`, `знахідний`, `орудний`, `місцевий`, `кличний`). Both default to the first value. Choose the case from the sentence even when the localized forms coincide (родовий and знахідний of `Лун` are both `Луна`): a reader's own name may decline differently.
+  - `data-form` is `однина` (default) or `множина`; `data-case` is one of `називний` (default), `родовий`, `давальний`, `знахідний`, `орудний`, `місцевий`, `кличний`. Leave defaults out. Choose the case from the sentence even when the localized forms coincide (родовий and знахідний of `Лун` are both `Луна`): a reader's own name may decline differently.
   - **The text inside the span must be exactly the localized form** for that number and case. It is what readers see before the script runs and what the voiceover is generated from. A capital first letter at a sentence start is allowed and kept by the runtime.
   - Only the replaceable part goes inside the span: in `<span data-name="Ward">Вартові</span> Схід-Північ-Схід` the suffix, and quotes around a title, stay outside, or replacement would drop them.
-  - A new key needs an entry in `assets/names.json`; the validator reports missing keys, wrong cases and names left without markup.
+  - A new key needs an entry in `assets/names.json`; the validator reports missing keys, wrong cases and names left without markup, and `tools/markup_names.py` adds most missing spans itself.
+- One original paragraph is one `<p>`; keep it that way when editing, since voiceover chunks follow paragraph boundaries. No `<br>`, no other attributes.
 
 ## Name sets
 
@@ -75,6 +77,14 @@ The three name attributes do different things:
 - The validator writes `names.json` with one line per case table; keep that format when editing by hand.
 
 The reader's choice lives in `localStorage["worm-uk:names"]` as `{ set, base, custom }`. `set` is one of the dictionary sets or `custom` ("Мої"); `custom` maps keys to the reader's own values (same format as above), and names without one come from `base`. Saving an own name switches to `custom` automatically. Readers change sets from the popover on a name or in the "Імена" tab of the settings, which also has the own-name editor and a JSON backup of the custom names. The voiceover always uses the localized names.
+
+## Voiceover pipeline
+
+Target: ElevenLabs Eleven v4 (`eleven_v4`, supports Ukrainian) through the Text to Dialogue API, where each request is a list of `{text, voice_id}` turns, about 2000 characters at most, and audio tags in square brackets direct the delivery.
+
+1. `tools/export_tts.py <id>` turns the chapter into `tts/<id>.json`: chunks of whole paragraphs (under 1800 characters, leaving room for tags), each split into inputs by voice, with localized names. Not committed.
+2. The `tts-tags` skill writes `tts/<id>.tagged.json` with audio tags added; `--check` guarantees the words are unchanged. Committed.
+3. Not built yet: a sender that maps voices to `voiceId` from `tts/voices.json`, calls the API per chunk and joins the audio. Because chunks start at paragraph boundaries, the chunk start times give paragraph timings for text and audio sync.
 
 ## Chapter workflow (from git history)
 
