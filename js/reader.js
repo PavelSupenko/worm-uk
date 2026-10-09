@@ -1,8 +1,9 @@
 // Entry point of chapter_template.html: loads the chapter named in the URL.
 import { loadChapters, fetchText, chapterTitle, chapterLabel, chapterUrl, isDraft } from './data.js';
+import { initNamePopover } from './name-popover.js';
 import { loadNames, applyNames } from './names.js';
 import { getChapterProgress, updateChapterProgress } from './progress.js';
-import { initSettingsPanel, getSettings, updateSettings } from './settings.js';
+import { initSettingsPanel, getSettings, openSettings, updateSettings } from './settings.js';
 import { renderToc } from './toc.js';
 import { icon, escapeHtml, setupDrawer, autoHideTopbar } from './ui.js';
 
@@ -58,6 +59,9 @@ async function main() {
     // Chapter fragments carry their own id="chapter-text"; drop the duplicate
     article.querySelector('#chapter-text')?.removeAttribute('id');
     applyNames(article);
+    initNamePopover(article, {
+        onCustomize: key => openSettings({ tab: 'names', nameKey: key })
+    });
 
     await document.fonts.ready; // fonts change the page height
     restoreScroll(chapter.id);

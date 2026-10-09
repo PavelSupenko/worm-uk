@@ -277,6 +277,36 @@ dialog.drawer::backdrop { background: rgb(0 0 0 / 0.5); }
 
 .drawer-title { margin: 0; font-size: 1.15rem; }
 
+.drawer-head--tabs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding-bottom: 0;
+}
+
+.drawer-head-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tabs { display: flex; }
+.tabs [role="tab"] {
+    flex: 1;
+    min-height: 44px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+.tabs [role="tab"][aria-selected="true"] {
+    border-bottom-color: var(--accent);
+    color: var(--accent);
+}
+
 .drawer-home {
     display: inline-flex;
     align-items: center;
@@ -517,6 +547,18 @@ dialog.drawer::backdrop { background: rgb(0 0 0 / 0.5); }
     color: var(--name);
 }
 
+/* Names that open the name popover */
+.chapter-text [data-name][role="button"] {
+    border-radius: 3px;
+    cursor: pointer;
+}
+:root[data-highlight-names="on"] .chapter-text [data-name][role="button"] {
+    text-decoration: underline dotted;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+}
+.chapter-text [data-name][role="button"]:hover { background: var(--accent-soft); }
+
 /* ---------- Settings drawer ---------- */
 
 .settings-section {
@@ -584,21 +626,192 @@ dialog.drawer::backdrop { background: rgb(0 0 0 / 0.5); }
     accent-color: var(--accent);
 }
 
-.names-json summary { color: var(--accent); cursor: pointer; }
-.names-json textarea {
-    width: 100%;
-    margin-top: 10px;
-    padding: 10px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg);
-    color: var(--text);
-    font: 0.8rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
-    resize: vertical;
-}
-
 .settings-actions {
     display: flex;
     gap: 8px;
     margin: 10px 0;
+}
+
+.link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.input {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+}
+textarea.input {
+    margin-top: 6px;
+    font: 0.8rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    resize: vertical;
+}
+
+select {
+    min-height: 40px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 10px 0;
+}
+.field-label { color: var(--muted); font-size: 0.85rem; }
+.field-label small { opacity: 0.75; }
+
+/* ---------- Names tab ---------- */
+
+.set-list { display: grid; gap: 6px; }
+
+.set-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+}
+.set-option:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+.set-option input {
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--accent);
+}
+.set-option-text { display: flex; flex-direction: column; min-width: 0; }
+.set-option-title { font-weight: 500; }
+.set-option small { color: var(--muted); }
+
+.names-json summary { color: var(--accent); cursor: pointer; }
+
+.name-group-title {
+    margin: 18px 0 6px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.name-row {
+    margin-bottom: 6px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.name-row > summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 12px;
+    cursor: pointer;
+    list-style: none;
+}
+.name-row > summary::-webkit-details-marker { display: none; }
+.name-row[open] > summary { border-bottom: 1px solid var(--border); }
+.name-row-original { font-weight: 500; }
+.name-row-current {
+    margin-left: auto;
+    color: var(--accent);
+    font-family: var(--reader-font);
+    text-align: right;
+}
+.name-row .badge { color: var(--accent); }
+
+.name-editor { padding: 2px 12px 8px; }
+
+.case-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 10px;
+}
+.case-grid .field { margin: 6px 0; }
+
+.plural > summary { margin: 8px 0; color: var(--accent); cursor: pointer; }
+
+/* ---------- Name popover ---------- */
+
+.name-popover {
+    position: fixed;
+    inset: auto;
+    width: min(320px, calc(100vw - 16px));
+    margin: 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    font-family: var(--font-ui);
+}
+
+.name-popover-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: -4px -4px 0 0;
+}
+.name-popover-original { font-weight: 700; letter-spacing: 0.02em; }
+.name-popover-caption { margin: 0 0 10px; color: var(--muted); font-size: 0.85rem; }
+
+.name-popover-sets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.name-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-height: 56px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.name-option:hover { background: var(--surface-2); }
+.name-option-value { font-family: var(--reader-font); font-size: 1.05rem; overflow-wrap: anywhere; }
+.name-option-set { color: var(--muted); font-size: 0.75rem; }
+.name-option[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+.name-option[aria-pressed="true"] .name-option-value { color: var(--accent); font-weight: 700; }
+
+.name-popover-customize { width: 100%; margin-top: 10px; }
+
+/* On phones the popover is a bottom sheet */
+@media (max-width: 599px) {
+    .name-popover {
+        inset: auto 0 0 0;
+        width: 100%;
+        padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+        border-radius: 16px 16px 0 0;
+    }
 }
