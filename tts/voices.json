@@ -1,9 +1,9 @@
 {
-    "Reader": {"description": "Нейтральний оповідач: примітки автора, інтерлюдії від третьої особи", "voiceId": null},
-    "Taylor": {"description": "Тейлор Геберт, 15 років, оповідачка основних глав; стримана, спостережлива, іронічна", "voiceId": null},
-    "Gladly": {"description": "Містер Гледлі, учитель; бадьорий, хоче здаватися своїм для учнів", "voiceId": null},
-    "Lung": {"description": "Лун, дорослий чоловік, лідер банди; низький голос, сильний акцент", "voiceId": null},
-    "Brian": {"description": "Ґрю/Морок, юнак ~17 років; спокійний, низький, впевнений", "voiceId": null},
-    "Lisa": {"description": "Татлтейл/Наклепниця, дівчина ~16 років; жвава, глузлива", "voiceId": null},
-    "Alec": {"description": "Регент, хлопець ~16 років; млявий, саркастичний", "voiceId": null}
+    "Reader": {"description": "Нейтральний оповідач: примітки автора, інтерлюдії від третьої особи", "voiceName": "Bradford", "voiceId": "NNl6r8mD7vthiJatiJt1"},
+    "Taylor": {"description": "Тейлор Геберт, 15 років, оповідачка основних глав; стримана, спостережлива, іронічна", "voiceName": "Danielle", "voiceId": "FVQMzxJGPUBtfz1Azdoy"},
+    "Gladly": {"description": "Містер Гледлі, учитель; бадьорий, хоче здаватися своїм для учнів", "voiceName": "Mark", "voiceId": "1SM7GgM6IMuvQlz2BwM3"},
+    "Lung": {"description": "Лун, дорослий чоловік, лідер банди; низький голос, сильний акцент", "voiceName": "Rob", "voiceId": "2ajXGJNYBR0iNHpS4VZb"},
+    "Brian": {"description": "Ґрю/Морок, юнак ~17 років; спокійний, низький, впевнений", "voiceName": null, "voiceId": null},
+    "Lisa": {"description": "Татлтейл/Наклепниця, дівчина ~16 років; жвава, глузлива", "voiceName": "Ember", "voiceId": "WtA85syCrJwasGeHGH2p"},
+    "Alec": {"description": "Регент, хлопець ~16 років; млявий, саркастичний", "voiceName": null, "voiceId": null}
 }

@@ -47,7 +47,7 @@ English original to the repository: only the translation goes in.
 
 - A new cape, team or term: add an entry to `assets/names.json` with `category`, a complete `localized` table (7 cases × 2 numbers), `translit` (a string if it doesn't decline) and `original` (only if it differs from the key). Keep the file's one-line-per-table format.
 - Propose the localized translation yourself, but list every new name in the final report so the user can approve or change it before the chapter is published.
-- A new speaking character: add it to `tts/voices.json` with a short description (age, gender, manner of speech) and `"voiceId": null`. Use one consistent English key per person.
+- A new speaking character: add it to `tts/voices.json` with a short description (age, gender, manner of speech) and `"voiceName": null, "voiceId": null`; the user picks the ElevenLabs voice later. Use one consistent English key per person.
 
 ## 6. Check
 
