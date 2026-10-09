@@ -1,0 +1,14 @@
+# Stress hints for the voiceover (tools/export_tts.py). The site text is not changed.
+# One word or phrase per line, the stressed vowel in capitals; matching ignores case.
+# Use a phrase when the stress depends on the meaning: "укуси" is "укУси" (bites)
+# but "укусИ" (bite!), so only "укУси ос" is listed.
+
+# Bitch (Сука): Eleven v4 sometimes stresses the ending
+сУка
+сУки
+сУці
+сУку
+сУкою
+сУко
+
+укУси ос

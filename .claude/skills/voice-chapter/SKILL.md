@@ -47,8 +47,11 @@ unchanged, and when all chunks exist joins them into `tts/audio/<id>/<id>.mp3` w
 - Fix by changing tags in that chunk of `tts/<id>.tagged.json` (re-run the `--check`), then run the
   generator again: changed chunks are regenerated automatically. `--retake N` regenerates chunk N as it is,
   for a take that was just unlucky.
-- A wrong word or stress usually means the chapter text needs an edit: fix the chapter, run the
-  validator, export and re-tag the affected chunk.
+- A wrong stress: add the word to `tts/stress.txt` (stressed vowel in capitals; a phrase if the stress
+  depends on the meaning) or put a U+0301 mark after the vowel in that chunk of the tagged script, then
+  run the generator again: the changed chunks are regenerated.
+- A wrong word means the chapter text needs an edit: fix the chapter, run the validator, export and
+  re-tag the affected chunk.
 
 ## 5. Publish (only after the user approves the recording)
 

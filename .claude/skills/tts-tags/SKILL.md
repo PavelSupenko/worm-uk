@@ -23,12 +23,17 @@ The chapter itself is in the file listed for it in `assets/chapters.json`, if mo
 
 Copy the export and only insert tags into the `text` values.
 
-- **Never change the text**: no added, removed or reordered words, letters or punctuation; don't fix typos (report them instead). Don't merge or split inputs or chunks, don't touch `voice` or `paragraphs`.
+- **Never change the text**: no added, removed or reordered words, letters or punctuation; don't fix typos (report them instead). Tags and stress marks are the only additions. Don't merge or split inputs or chunks, don't touch `voice` or `paragraphs`.
 - Tags are short English directions placed right before the words they affect: `[sarcastic]`, `[whispers]`, `[shouting]`, `[angry]`, `[nervous]`, `[out of breath]`, `[laughs]`, `[sighs]`, `[pause]`, `[long pause]`, or your own words such as `[dry, unimpressed]` or `[through gritted teeth]`.
 - Dialogue gets most of the tags: read each line in context (who speaks, to whom, what just happened) and give the delivery the scene implies. A neutral line needs no tag.
 - The narrator stays mostly untagged. Use tags for clear shifts: tension in a fight, a quiet or tired moment, a dry joke, and `[pause]` or `[long pause]` at scene breaks and strong dramatic beats.
 - Density: on average about one tag per two to four sentences of dialogue and much less in narration; at most one delivery tag per sentence (reactions like `[laughs]` aside).
 - Tags count towards the API limit: every chunk must stay at or under 2000 characters including tags.
+- Stress: Eleven v4 follows a stress mark (U+0301) placed right after the stressed vowel. Words from
+  `tts/stress.txt` already carry it. Where a word in this chapter is likely to be stressed wrongly,
+  above all homographs whose stress depends on the meaning (за́мок/замо́к, уку́си/укуси́), add the mark in that
+  input; `--check` ignores stress marks. A word that is always stressed the same way belongs in
+  `tts/stress.txt` instead (one word per line, the stressed vowel in capitals).
 
 ## 3. Check
 

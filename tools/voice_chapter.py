@@ -35,7 +35,7 @@ import urllib.request
 from pathlib import Path
 
 from chapterlib import CHAPTERS_FILE, ROOT, VOICES_FILE, chapter_root, find_chapter, load_json, read_chapter, voice_runs
-from export_tts import DEFAULT_LIMIT, TAG, build_script, check
+from export_tts import DEFAULT_LIMIT, TAG, apply_stress, build_script, check
 
 API = 'https://api.elevenlabs.io/v1/text-to-dialogue'
 # Chunks come at a higher bitrate; joining encodes the chapter once to FINAL_BITRATE
@@ -179,6 +179,10 @@ def main():
     voice_ids = {name: voices[name]['voiceId'] for name in used}
 
     chunks = script['chunks']
+    # A script tagged before tts/stress.txt changed still gets the current marks
+    for chunk in chunks:
+        for item in chunk['inputs']:
+            item['text'] = apply_stress(item['text'])
     count = len(chunks)
     selected = parse_range(option('--chunks'), count) if option('--chunks') else list(range(1, count + 1))
     retake = set(parse_range(option('--retake'), count)) if option('--retake') else set()
