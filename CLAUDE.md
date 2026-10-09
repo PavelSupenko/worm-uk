@@ -22,6 +22,7 @@ python3 tools/check_chapters.py [--fix]          # validate all chapters; --fix 
 python3 tools/markup_names.py <id> [--write]     # wrap unmarked names in data-name spans, case taken from the form
 python3 tools/export_tts.py <id>                 # voiceover script for ElevenLabs -> tts/<id>.json
 python3 tools/export_tts.py <id> --check tts/<id>.tagged.json
+python3 tools/r2.py check|list                  # Cloudflare R2 access for the voiceover files
 ```
 
 Run the validator before committing changes to chapters or names; it exits with code 1 on errors. Two project skills cover the content workflow: `.claude/skills/translate-chapter` (translate a new chapter straight into the markup) and `.claude/skills/tts-tags` (add ElevenLabs audio tags for the voiceover). `ROADMAP.md` tracks planned work.
@@ -85,6 +86,8 @@ Target: ElevenLabs Eleven v4 (`eleven_v4`, supports Ukrainian) through the Text 
 1. `tools/export_tts.py <id>` turns the chapter into `tts/<id>.json`: chunks of whole paragraphs (under 1800 characters, leaving room for tags), each split into inputs by voice, with localized names. Not committed.
 2. The `tts-tags` skill writes `tts/<id>.tagged.json` with audio tags added; `--check` guarantees the words are unchanged. Committed.
 3. Not built yet: a sender that maps voices to `voiceId` from `tts/voices.json`, calls the API per chunk and joins the audio. Because chunks start at paragraph boundaries, the chunk start times give paragraph timings for text and audio sync.
+
+Audio hosting: the voiceover is moving to Cloudflare R2 (bucket `worm-uk-audio`, public r2.dev URL, CORS allows the site) to stay under the GitHub Pages size limit. The MP3s in `audio/` are going to be re-recorded; new recordings are uploaded to R2 and `audioFile` becomes their public URL, they are not committed. Credentials live in the user's `~/.zshrc` and must never be committed or printed: `ELEVENLABS_API_KEY` (Creator tier, about 12,000 characters per chapter) and `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`. A Claude Code session started before they were added doesn't see them in its environment.
 
 ## Chapter workflow (from git history)
 
