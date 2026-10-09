@@ -5,6 +5,7 @@ import { loadNames, applyNames } from './names.js';
 import { getChapterProgress, updateChapterProgress } from './progress.js';
 import { initSettingsPanel, getSettings, openSettings, updateSettings } from './settings.js';
 import { renderToc } from './toc.js';
+import { initTypoReport } from './typo-report.js';
 import { icon, escapeHtml, setupDrawer, autoHideTopbar } from './ui.js';
 
 const AUDIO_RATES = [0.75, 1, 1.25, 1.5, 2];
@@ -59,6 +60,10 @@ async function main() {
     applyNames(article);
     initNamePopover(article, {
         onCustomize: key => openSettings({ tab: 'names', nameKey: key })
+    });
+    initTypoReport(article, $('report-hint'), {
+        title: chapterTitle(chapter),
+        url: new URL(chapterUrl(chapter), location.href).href
     });
 
     await document.fonts.ready; // fonts change the page height
