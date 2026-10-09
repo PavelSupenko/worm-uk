@@ -1,13 +1,14 @@
 // Loading of the chapter list and helpers for naming and linking chapters.
+import { versioned } from './version.js';
 
 export async function fetchJSON(url) {
-    const response = await fetch(url);
+    const response = await fetch(versioned(url));
     if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
     return response.json();
 }
 
 export async function fetchText(url) {
-    const response = await fetch(url);
+    const response = await fetch(versioned(url));
     if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
     return response.text();
 }
