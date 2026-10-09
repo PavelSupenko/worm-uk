@@ -18,6 +18,11 @@ The default limit (1800) leaves room for audio tags under the API's
 (.claude/skills/tts-tags) into tts/<id>.tagged.json; --check verifies that the
 tagged file has the same chunks, voices and words as the current chapter,
 only with [tags] added, and that no request grows over 2000 characters.
+
+Stress: words and phrases listed in tts/stress.txt get a stress mark (U+0301
+after the stressed vowel) in the exported text, which Eleven v4 follows. The
+chapter text on the site is unchanged. --check ignores stress marks, so the
+tagging pass may add them for one-off cases too.
 """
 import json
 import re
@@ -25,12 +30,47 @@ import sys
 
 from chapterlib import ROOT, chapter_root, find_chapter, read_chapter, voice_runs
 
+ACUTE = '\u0301'
+STRESS_FILE = ROOT / 'tts' / 'stress.txt'
+WORD = r"[\w'’ʼ-]"
+
 MODEL_ID = 'eleven_v4'
 DEFAULT_LIMIT = 1800
 API_LIMIT = 2000
 PARAGRAPH_JOIN = '\n\n'
 TAG = re.compile(r'\[[^\[\]]*\]')
 SENTENCE_END = re.compile(r'(?<=[.!?…»”])\s+')
+
+
+_stress_rules = None
+
+
+def stress_rules():
+    """[(pattern, stressed text)] from tts/stress.txt, longest phrases first.
+    A line is a word or phrase with the stressed vowel in capitals ("сУкою")
+    or followed by U+0301; lines starting with # are comments."""
+    global _stress_rules
+    if _stress_rules is None:
+        rules = []
+        lines = STRESS_FILE.read_text(encoding='utf-8').splitlines() if STRESS_FILE.is_file() else []
+        for line in lines:
+            entry = line.split('#', 1)[0].strip()
+            if not entry:
+                continue
+            plain = entry.lower().replace(ACUTE, '')
+            stressed = ''.join(ch.lower() + ACUTE if ch.isupper() else ch for ch in entry)
+            pattern = re.compile(rf'(?<!{WORD}){re.escape(plain)}(?!{WORD}|{ACUTE})', re.IGNORECASE)
+            rules.append((pattern, stressed))
+        _stress_rules = sorted(rules, key=lambda rule: -len(rule[1]))
+    return _stress_rules
+
+
+def apply_stress(text):
+    """Adds the stress marks from tts/stress.txt. Words that already carry a
+    mark don't match, so applying it twice changes nothing."""
+    for pattern, stressed in stress_rules():
+        text = pattern.sub(lambda m: stressed[0].upper() + stressed[1:] if m.group(0)[0].isupper() else stressed, text)
+    return text
 
 
 def split_long(runs, limit):
@@ -74,6 +114,7 @@ def build_script(chapter, limit):
         current['size'] += size + len(PARAGRAPH_JOIN)
 
     for number, runs in enumerate(voice_runs(root), start=1):
+        runs = [(voice, apply_stress(text)) for voice, text in runs]
         if sum(len(text) for _, text in runs) > limit:
             for piece in split_long(runs, limit):
                 current = None  # each piece is a request of its own
@@ -93,7 +134,7 @@ def build_script(chapter, limit):
 
 
 def normalize(text):
-    return re.sub(r'\s+', ' ', TAG.sub(' ', text)).strip()
+    return re.sub(r'\s+', ' ', TAG.sub(' ', text).replace(ACUTE, '')).strip()
 
 
 def check(script, tagged_path):
