@@ -1,7 +1,8 @@
 // Small shared UI helpers: icons, dialogs, the auto-hiding top bar.
+import { versioned } from './version.js';
 
 export function icon(name) {
-    return `<svg class="icon" aria-hidden="true"><use href="assets/icons.svg#${name}"></use></svg>`;
+    return `<svg class="icon" aria-hidden="true"><use href="${versioned(`assets/icons.svg#${name}`)}"></use></svg>`;
 }
 
 export function escapeHtml(text) {
