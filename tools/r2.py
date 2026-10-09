@@ -98,6 +98,29 @@ def list_files(cfg, prefix=''):
             return files
 
 
+def public_url(cfg, key):
+    return f'{cfg["R2_PUBLIC_URL"]}/{urllib.parse.quote(key)}'
+
+
+def put_file(cfg, key, data, content_type, cache_control='public, max-age=31536000, immutable'):
+    """Uploads bytes and checks that the public URL serves them."""
+    status, _, body = s3_request(cfg, 'PUT', key, body=data,
+                                 headers={'content-type': content_type, 'cache-control': cache_control})
+    if status != 200:
+        raise SystemExit(f'Upload of {key} failed: HTTP {status}\n{body.decode(errors="replace")[:500]}')
+    url = public_url(cfg, key)
+    status, headers, _ = _send(url, 'HEAD')
+    if status != 200 or int(headers.get('Content-Length', -1)) != len(data):
+        raise SystemExit(f'{url} is not served correctly after the upload (HTTP {status})')
+    return url
+
+
+def delete_file(cfg, key):
+    status, _, body = s3_request(cfg, 'DELETE', key)
+    if status not in (200, 204):
+        raise SystemExit(f'Deleting {key} failed: HTTP {status}\n{body.decode(errors="replace")[:500]}')
+
+
 def check(cfg):
     files = list_files(cfg)
     print(f'credentials: OK, bucket "{cfg["R2_BUCKET"]}" has {len(files)} files')

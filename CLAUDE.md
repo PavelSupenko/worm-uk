@@ -22,10 +22,11 @@ python3 tools/check_chapters.py [--fix]          # validate all chapters; --fix 
 python3 tools/markup_names.py <id> [--write]     # wrap unmarked names in data-name spans, case taken from the form
 python3 tools/export_tts.py <id>                 # voiceover script for ElevenLabs -> tts/<id>.json
 python3 tools/export_tts.py <id> --check tts/<id>.tagged.json
+python3 tools/voice_chapter.py <id> [--chunks 3-4] [--retake 3] [--publish]   # generate / publish the voiceover
 python3 tools/r2.py check|list                  # Cloudflare R2 access for the voiceover files
 ```
 
-Run the validator before committing changes to chapters or names; it exits with code 1 on errors. Two project skills cover the content workflow: `.claude/skills/translate-chapter` (translate a new chapter straight into the markup) and `.claude/skills/tts-tags` (add ElevenLabs audio tags for the voiceover). `ROADMAP.md` tracks planned work.
+Run the validator before committing changes to chapters or names; it exits with code 1 on errors. Three project skills cover the content workflow: `.claude/skills/translate-chapter` (translate a new chapter straight into the markup), `.claude/skills/tts-tags` (add ElevenLabs audio tags) and `.claude/skills/voice-chapter` (generate, review and publish the voiceover). `ROADMAP.md` tracks planned work.
 
 The live site is GitHub Pages for `origin` (`PavelSupenko/worm-uk`, default branch `master`), deployed by `.github/workflows/pages.yml`: the validator runs first and the site only updates when it passes. `tools/build_site.sh` assembles the published files (pages, `js`, `assets`, `texts`, `audio`; tools, `tts` and docs are not published) and stamps the commit hash into module, stylesheet, icon and data URLs through `js/version.js`, so browsers never mix files from two deploys. Assume a push to `master` goes live within a few minutes.
 
@@ -85,7 +86,10 @@ Target: ElevenLabs Eleven v4 (`eleven_v4`, supports Ukrainian) through the Text 
 
 1. `tools/export_tts.py <id>` turns the chapter into `tts/<id>.json`: chunks of whole paragraphs (under 1800 characters, leaving room for tags), each split into inputs by voice, with localized names. Not committed.
 2. The `tts-tags` skill writes `tts/<id>.tagged.json` with audio tags added; `--check` guarantees the words are unchanged. Committed.
-3. Not built yet: a sender that maps voices to `voiceId` from `tts/voices.json`, calls the API per chunk and joins the audio. Because chunks start at paragraph boundaries, the chunk start times give paragraph timings for text and audio sync.
+3. `tools/voice_chapter.py <id>` sends one Text to Dialogue request per chunk (voices mapped through `voiceId` in `tts/voices.json`, `previous_text`/`future_text` for continuity across chunks), skips unchanged chunks, then decodes and joins them with a short pause into one 64 kbps mono MP3 in `tts/audio/<id>/` (not committed), plus `timings.json`: paragraph start times (exact at chunk starts, estimated by character share inside a chunk) for the future text and audio sync.
+4. `--publish` uploads the MP3 to R2 under a content-hashed name, writes `assets/timings/<id>.json` and sets `audioFile` to the R2 URL. Publish only what the user has listened to and approved.
+
+Attributions must stay with the narrator: in `<span data-voice="Lisa">“…,”</span> — сказала вона, — <span data-voice="Lisa">“…”</span>` the "сказала вона" part is outside the voice spans, or the character's voice reads it. The validator warns about this.
 
 Audio hosting: the voiceover is moving to Cloudflare R2 (bucket `worm-uk-audio`, public r2.dev URL, CORS allows the site) to stay under the GitHub Pages size limit. The MP3s in `audio/` are going to be re-recorded; new recordings are uploaded to R2 and `audioFile` becomes their public URL, they are not committed. Credentials live in the user's `~/.zshrc` and must never be committed or printed: `ELEVENLABS_API_KEY` (Creator tier, about 12,000 characters per chapter) and `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`. A Claude Code session started before they were added doesn't see them in its environment.
 
