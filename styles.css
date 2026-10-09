@@ -542,6 +542,22 @@ dialog.drawer::backdrop { background: rgb(0 0 0 / 0.5); }
 
 .loading { color: var(--muted); }
 
+.report-hint {
+    margin: 24px 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.typo-button {
+    position: fixed;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 50%;
+    z-index: 20;
+    transform: translateX(-50%);
+    box-shadow: var(--shadow);
+}
+
 :root[data-highlight-names="on"] .chapter-text [data-character],
 :root[data-highlight-names="on"] .chapter-text [data-name] {
     color: var(--name);
