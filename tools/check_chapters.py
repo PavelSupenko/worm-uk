@@ -19,6 +19,7 @@ Errors (must be fixed):
   - names.json entries with incomplete declension tables or a wrong firstSeen
 Warnings:
   - a capitalized name form appears in the text without any name markup
+  - an attribution ("— сказала вона —") sits inside a data-voice span
   - a names.json entry is not used in any chapter
 """
 import re
@@ -29,6 +30,8 @@ from chapterlib import (CASES, FORMS, NAMES_FILE, ROOT, VOICES_FILE, Element, al
 
 SETS = ('localized', 'translit', 'original')
 WORD = r"[\w'’ʼ-]"
+# A quote that closes, a dash, then narration (and maybe a reopening quote): an attribution
+ATTRIBUTION = re.compile(r'[”"]\s*—\s*[^“"”]+?—\s*[“"]|[”"]\s*—\s*[^“"”]+$')
 INLINE_TAGS = {'span', 'i', 'em', 'b', 'strong', 'br'}
 
 
@@ -93,6 +96,8 @@ def check_chapter(chapter, names, voices, errors, warnings, first_seen):
             voice = element.attrs.get('data-voice')
             if voice is not None and voice not in voices:
                 errors.append(f'{where}: voice "{voice}" is not in tts/voices.json')
+            if voice is not None and ATTRIBUTION.search(element.text()):
+                warnings.append(f'{where}: narration inside data-voice="{voice}" ("— сказав він" belongs to the narrator)')
             if 'data-name' in element.attrs:
                 spans += 1
                 check_name(element, where, names, errors, first_seen, chapter['id'])
@@ -169,8 +174,10 @@ def main():
         if chapter.get('status') not in (None, 'draft'):
             errors.append(f'chapters.json: {cid}: unknown status "{chapter["status"]}"')
         for field in ('textFile', 'audioFile'):
-            if field in chapter and not (ROOT / chapter[field]).is_file():
-                errors.append(f'chapters.json: {cid}: {field} not found: {chapter[field]}')
+            value = chapter.get(field)
+            # Published voiceovers live in Cloudflare R2 (tools/voice_chapter.py --publish)
+            if value and not value.startswith('https://') and not (ROOT / value).is_file():
+                errors.append(f'chapters.json: {cid}: {field} not found: {value}')
         if (ROOT / chapter.get('textFile', '')).is_file():
             spans += check_chapter(chapter, names, voices, errors, warnings, first_seen)
 

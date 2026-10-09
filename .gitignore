@@ -8,3 +8,6 @@ tts/*.json
 
 # Voice comparison samples, local only
 tts/samples/
+
+# Voiceover work files (tools/voice_chapter.py)
+tts/audio/
