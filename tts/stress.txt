@@ -12,3 +12,11 @@
 сУко
 
 укУси ос
+
+# Lung (Лун): the stress stays on у in every form, never on the ending.
+# Matching ignores case; "луна" (echo, луна́) would match too, so watch for it in later chapters.
+лУна
+лУну
+лУном
+лУні
+лУне
