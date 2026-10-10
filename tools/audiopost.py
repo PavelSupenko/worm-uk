@@ -20,7 +20,8 @@ one chunk, for experiments:
    ignores speed tags.
 4. Every voice gets one constant gain towards VOICE_LUFS, so the voices sound
    equally loud while a shout stays louder than a whisper. The result is then
-   brought to TARGET_LUFS with one linear gain under the true-peak limit.
+   brought to TARGET_LUFS with one linear gain; a limiter catches the few
+   peaks above LIMITER_DB, so one shout doesn't hold the whole chapter down.
 5. The silence at the start and end of a chunk is cut down to EDGE_SILENCE, so
    a join between chunks sounds like any pause inside a chunk, and the whole
    chapter is sped up by CHAPTER_TEMPO at the end.
@@ -47,7 +48,7 @@ EDGE_SILENCE = 0.1       # silence kept at the start and end of a chunk (pauses 
 VOICE_LUFS = -20.0       # every voice is moved towards this loudness
 MAX_GAIN_DB = 8.0        # never move a voice by more than this
 TARGET_LUFS = -18.0      # usual loudness for spoken-word audio
-MAX_TRUE_PEAK = -1.0
+LIMITER_DB = -2.0        # sample-peak ceiling, keeps the true peak of the MP3 under -1 dBTP
 MIN_COVERAGE = 0.85      # below this share of aligned words a chunk is left as it is
 BITRATE = '64k'
 WORD = re.compile(r"[\w'’ʼ]+")
@@ -253,16 +254,18 @@ def time_map(segments, fast, tempo):
 
 def finalize(wav, out, tempo=CHAPTER_TEMPO):
     """Speeds the whole audio up by tempo, then one linear gain to TARGET_LUFS
-    under the true-peak limit, MP3 encode."""
+    and a limiter for the rare peaks above LIMITER_DB (a shout), MP3 encode."""
     with tempfile.TemporaryDirectory() as tmp:
         source = wav
         if tempo != 1.0:
             source = Path(tmp) / 'tempo.wav'
             subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', str(wav), '-af', f'atempo={tempo}',
                             '-c:a', 'pcm_s16le', str(source)], check=True)
-        lufs, peak = measure(source)
-        gain = 0.0 if lufs is None else min(TARGET_LUFS - lufs, MAX_TRUE_PEAK - (peak if peak is not None else -99))
-        subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', str(source), '-af', f'volume={gain:.2f}dB',
+        lufs, _ = measure(source)
+        gain = 0.0 if lufs is None else TARGET_LUFS - lufs
+        limit = 10 ** (LIMITER_DB / 20)
+        subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', str(source), '-af',
+                        f'volume={gain:.2f}dB,alimiter=limit={limit:.4f}:attack=5:release=50:level=0',
                         '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', BITRATE, str(out)], check=True)
     return gain
 
