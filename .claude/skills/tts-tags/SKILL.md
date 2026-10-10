@@ -26,6 +26,11 @@ Copy the export and only insert tags into the `text` values.
 - **Never change the text**: no added, removed or reordered words, letters or punctuation; don't fix typos (report them instead). Tags and stress marks are the only additions. Don't merge or split inputs or chunks, don't touch `voice` or `paragraphs`.
 - Tags are short English directions placed right before the words they affect: `[sarcastic]`, `[whispers]`, `[shouting]`, `[angry]`, `[nervous]`, `[out of breath]`, `[laughs]`, `[sighs]`, `[pause]`, `[long pause]`, or your own words such as `[dry, unimpressed]` or `[through gritted teeth]`.
 - Dialogue gets most of the tags: read each line in context (who speaks, to whom, what just happened) and give the delivery the scene implies. A neutral line needs no tag.
+- Interrupted speech: when a character's line breaks off ("Дівчина з псами..."), the narrator explains
+  something and the same character goes on, put `[breaks off mid-sentence]` right before the words that
+  are cut off and start the continuation with `[resuming, <delivery>]` (e.g. `[resuming, dry]`). Without
+  them the model ends the first part like a finished sentence. Don't add speed tags to the narrator's
+  aside: Eleven v4 ignores them.
 - The narrator stays mostly untagged. Use tags for clear shifts: tension in a fight, a quiet or tired moment, a dry joke, and `[pause]` or `[long pause]` at scene breaks and strong dramatic beats.
 - Density: on average about one tag per two to four sentences of dialogue and much less in narration; at most one delivery tag per sentence (reactions like `[laughs]` aside).
 - Tags count towards the API limit: every chunk must stay at or under 2000 characters including tags.
