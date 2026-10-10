@@ -24,6 +24,8 @@ python3 tools/export_tts.py <id>                 # voiceover script for ElevenLa
 python3 tools/export_tts.py <id> --check tts/<id>.tagged.json
 python3 tools/voice_chapter.py <id> [--chunks 3-4] [--retake 3] [--publish]   # generate / publish the voiceover
 python3 tools/r2.py check|list                  # Cloudflare R2 access for the voiceover files
+python3 tools/audiopost.py CHUNK.mp3 --chapter <id> --chunk N   # prototype: speed up asides, balance voices
+tools/setup.sh                                  # prepare a machine (see "Outside the repository")
 ```
 
 Run the validator before committing changes to chapters or names; it exits with code 1 on errors. Three project skills cover the content workflow: `.claude/skills/translate-chapter` (translate a new chapter straight into the markup), `.claude/skills/tts-tags` (add ElevenLabs audio tags) and `.claude/skills/voice-chapter` (generate, review and publish the voiceover). `ROADMAP.md` tracks planned work.
@@ -94,6 +96,12 @@ Stress: Eleven v4 follows a combining acute (U+0301) after the stressed vowel. `
 Attributions must stay with the narrator: in `<span data-voice="Lisa">“…,”</span> — сказала вона, — <span data-voice="Lisa">“…”</span>` the "сказала вона" part is outside the voice spans, or the character's voice reads it. The validator warns about this.
 
 Audio hosting: the voiceover is moving to Cloudflare R2 (bucket `worm-uk-audio`, public r2.dev URL, CORS allows the site) to stay under the GitHub Pages size limit. The MP3s in `audio/` are going to be re-recorded; new recordings are uploaded to R2 and `audioFile` becomes their public URL, they are not committed. Credentials live in the user's `~/.zshrc` and must never be committed or printed: `ELEVENLABS_API_KEY` (Creator tier, about 12,000 characters per chapter) and `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`. A Claude Code session started before they were added doesn't see them in its environment.
+
+## Outside the repository
+
+Everything the tools need beyond the repo is restored on a new Mac by `tools/setup.sh` (safe to re-run): Homebrew packages `ffmpeg` and `whisper.cpp` (local speech recognition), the whisper model `ggml-large-v3-turbo-q5_0.bin` in `~/.cache/whisper` (downloaded from the whisper.cpp Hugging Face repo, SHA-256 pinned in the script; `WHISPER_MODEL_DIR` overrides the folder), and a check of the credentials listed under "Voiceover pipeline", which the user keeps in `~/.zshrc`. Anything new that has to live outside the repo goes into that script.
+
+Post-processing (prototype, `tools/audiopost.py`): whisper.cpp gives word times for a generated chunk, which are matched to the chunk's text. That locates every turn, so narrator asides (narration between two parts of one character's line in a paragraph) can be sped up with `atempo` (Eleven v4 ignores speed tags), and each voice gets one constant gain to balance the voices without flattening their dynamics, followed by one linear gain to -18 LUFS. Not yet part of `voice_chapter.py`.
 
 ## Chapter workflow (from git history)
 
