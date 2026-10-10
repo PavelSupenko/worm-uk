@@ -1,29 +1,40 @@
 #!/usr/bin/env python3
-"""Voices a chapter with ElevenLabs Text to Dialogue (Eleven v4) and publishes it.
+"""Voices a chapter with ElevenLabs Text to Dialogue (Eleven v4), post-processes
+it locally and publishes it.
 
 Usage:
-    python3 tools/voice_chapter.py 1.5                  # generate missing chunks, join, write timings
+    python3 tools/voice_chapter.py 1.5                  # generate missing chunks, then post-process and join
     python3 tools/voice_chapter.py 1.5 --chunks 3-4     # only some chunks (tests, partial work)
     python3 tools/voice_chapter.py 1.5 --retake 3       # generate chunk 3 again
     python3 tools/voice_chapter.py 1.5 --publish        # upload to R2, point chapters.json at it
 Options:
     --script PATH     use another tagged script instead of tts/<id>.tagged.json
     --untagged        use the plain export, without audio tags
+    --no-post         join the raw chunks without post-processing
+    --recalibrate     measure the voices again instead of using gainDb from tts/voices.json
 
-Every chunk of the script (whole paragraphs, see tools/export_tts.py) is one
-Text to Dialogue request: the narrator and the characters in one call, so the
-model hears the scene. The end of the previous chunk and the start of the next
-one go along as previous_text/future_text to keep the intonation across seams.
-The tagged script is checked against the current chapter first, so the audio
-always matches the published text. Requests whose content didn't change are
-not sent again.
+Generation: every chunk of the script (whole paragraphs, see tools/export_tts.py)
+is one Text to Dialogue request with the narrator and the characters, so the
+model hears the scene; the neighbouring chunks' text goes along as
+previous_text/future_text. The tagged script is checked against the chapter
+first, stress marks from tts/stress.txt are applied, and chunks whose content
+didn't change are not sent again.
+
+Post-processing (tools/audiopost.py, local whisper.cpp): every chunk is aligned
+with its text; narrator asides inside a character's line are sped up, and every
+voice gets its constant gain. The gain is measured once over a chapter where the
+voice speaks for at least CALIBRATION_SECONDS and stored as gainDb in
+tts/voices.json together with the voiceId it was measured for (gainVoiceId), so
+voices keep the same level across chapters and a recast voice is measured again. The chapter is
+brought to -18 LUFS and encoded once at 64 kbps; timings.json holds the exact
+start of every paragraph (its first word) in the final audio.
 
 Work files are in tts/audio/<id>/ (not committed): chunk-NN.mp3, manifest.json,
-<id>.mp3 (the joined chapter) and timings.json (start time of every paragraph,
-estimated within a chunk from its share of the characters).
+align-NN.json, post-NN.wav, <id>.mp3 (the chapter) and timings.json.
 --publish uploads <id>.mp3 to R2 under a content-hashed name, writes
 assets/timings/<id>.json and sets audioFile in assets/chapters.json.
-Needs ELEVENLABS_API_KEY (and R2_* for --publish) in the environment, and ffmpeg.
+Needs ELEVENLABS_API_KEY (and R2_* for --publish), ffmpeg and, for
+post-processing, whisper.cpp with its model (tools/setup.sh).
 """
 import hashlib
 import json
@@ -34,16 +45,19 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+import audiopost
 from chapterlib import CHAPTERS_FILE, ROOT, VOICES_FILE, chapter_root, find_chapter, load_json, read_chapter, voice_runs
 from export_tts import DEFAULT_LIMIT, TAG, apply_stress, build_script, check
 
 API = 'https://api.elevenlabs.io/v1/text-to-dialogue'
-# Chunks come at a higher bitrate; joining encodes the chapter once to FINAL_BITRATE
+# Chunks come at a higher bitrate; the chapter is encoded once at the end
 OUTPUT_FORMAT = 'mp3_44100_128'
-FINAL_BITRATE = '64k'
 LANGUAGE = 'uk'
-CONTEXT_CHARS = 100  # API limit for previous_text / future_text
-CHUNK_PAUSE = 0.4    # seconds of silence between chunks (they end on a paragraph)
+CONTEXT_CHARS = 100        # API limit for previous_text / future_text
+CHUNK_PAUSE = 0.4          # seconds of silence between chunks (they end on a paragraph)
+CALIBRATION_SECONDS = 20   # speech a voice needs in a chapter before its gain is stored
+
+duration = audiopost.duration
 
 
 def plain(text):
@@ -58,10 +72,8 @@ def parse_range(value, count):
     return sorted(n for n in numbers if 1 <= n <= count)
 
 
-def duration(path):
-    out = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', str(path)],
-                         capture_output=True, text=True, check=True)
-    return float(out.stdout.strip())
+def sha256(data):
+    return hashlib.sha256(data).hexdigest()
 
 
 def generate(chunk, voice_ids, model_id, previous, following):
@@ -84,42 +96,142 @@ def generate(chunk, voice_ids, model_id, previous, following):
         raise SystemExit(f'ElevenLabs: HTTP {error.code}\n{error.read().decode(errors="replace")[:500]}')
 
 
-def join(work, chapter_id, count):
-    """Decodes the chunks, puts a short pause between them and encodes the
-    chapter once (copying MP3 frames leaves glitches at the seams). Returns the
-    chunk start times."""
-    chunks = [work / f'chunk-{n:02}.mp3' for n in range(1, count + 1)]
+def join(files, out, encode=True):
+    """Decodes the parts, puts a short pause between them and writes one file
+    (MP3 at audiopost.BITRATE, or WAV). Returns the start time of every part."""
     inputs, graph = [], []
-    for i, chunk in enumerate(chunks):
-        inputs += ['-i', str(chunk)]
-        # Mono 44.1 kHz for every part, a pause padded after all but the last
-        pad = f',apad=pad_dur={CHUNK_PAUSE}' if i < count - 1 else ''
+    for i, file in enumerate(files):
+        inputs += ['-i', str(file)]
+        pad = f',apad=pad_dur={CHUNK_PAUSE}' if i < len(files) - 1 else ''
         graph.append(f'[{i}:a]aformat=sample_rates=44100:channel_layouts=mono{pad}[a{i}]')
-    graph.append(''.join(f'[a{i}]' for i in range(count)) + f'concat=n={count}:v=0:a=1[out]')
-    out = work / f'{chapter_id}.mp3'
+    graph.append(''.join(f'[a{i}]' for i in range(len(files))) + f'concat=n={len(files)}:v=0:a=1[out]')
+    codec = ['-c:a', 'libmp3lame', '-b:a', audiopost.BITRATE] if encode else ['-c:a', 'pcm_s16le']
     subprocess.run(['ffmpeg', '-y', '-v', 'error', *inputs, '-filter_complex', ';'.join(graph), '-map', '[out]',
-                    '-c:a', 'libmp3lame', '-b:a', FINAL_BITRATE, str(out)], check=True)
+                    *codec, str(out)], check=True)
     starts, position = [], 0.0
-    for chunk in chunks:
+    for file in files:
         starts.append(position)
-        position += duration(chunk) + CHUNK_PAUSE
-    return out, starts
+        position += duration(file) + CHUNK_PAUSE
+    return starts
 
 
-def paragraph_timings(chapter, script, starts, work):
-    """Start of every paragraph: the chunk start plus its share of the chunk's characters."""
-    lengths = [sum(len(text) for _, text in runs) for runs in voice_runs(chapter_root(read_chapter(chapter)))]
+def paragraph_lengths(chapter):
+    runs = voice_runs(chapter_root(read_chapter(chapter)))
+    return ([sum(len(text) for _, text in r) for r in runs],
+            [len(audiopost.words_of(' '.join(text for _, text in r))) for r in runs])
+
+
+def estimate_starts(times, lengths, chunk, start, length):
+    """Fills the paragraphs of a chunk by their share of its characters."""
+    first, last = chunk['paragraphs']
+    total = sum(lengths[p - 1] for p in range(first, last + 1)) or 1
+    before = 0
+    for p in range(first, last + 1):
+        if times[p - 1] is None:
+            times[p - 1] = round(start + length * before / total, 1)
+        before += lengths[p - 1]
+
+
+def save_voices(voices):
+    lines = []
+    for name, entry in voices.items():
+        ordered = {k: entry[k] for k in ('description', 'voiceName', 'voiceId', 'gainDb', 'gainVoiceId') if k in entry}
+        lines.append(f'    {json.dumps(name)}: {json.dumps(ordered, ensure_ascii=False)}')
+    VOICES_FILE.write_text('{\n' + ',\n'.join(lines) + '\n}\n', encoding='utf-8')
+
+
+def analysis_of(work, n, chunk):
+    """Alignment of chunk n, cached in align-NN.json by audio and text."""
+    audio = work / f'chunk-{n:02}.mp3'
+    key = sha256(audio.read_bytes() + json.dumps([i['text'] for i in chunk['inputs']], ensure_ascii=False).encode())
+    cache = work / f'align-{n:02}.json'
+    if cache.is_file():
+        cached = json.loads(cache.read_text())
+        if cached.get('key') == key:
+            return cached['analysis']
+    analysis = audiopost.analyse(audio, chunk['inputs'])
+    cache.write_text(json.dumps({'key': key, 'analysis': analysis}))
+    return analysis
+
+
+def post_process(chapter, script, work, voices, recalibrate=False, save=True):
+    """Aligns, balances and speeds up every chunk, joins the chapter.
+    Returns (chapter mp3, paragraph start times)."""
+    chunks = script['chunks']
+    asides = audiopost.aside_keys(chapter)
+    plans = []
+    for n, chunk in enumerate(chunks, start=1):
+        analysis = analysis_of(work, n, chunk)
+        usable = analysis['coverage'] >= audiopost.MIN_COVERAGE
+        if not usable:
+            print(f'chunk {n}: only {analysis["coverage"]:.0%} of the words aligned, left unprocessed')
+        segments = audiopost.segments_of(analysis, chunk['inputs'])
+        fast = {i for i, item in enumerate(chunk['inputs']) if audiopost.aside_key(item['text']) in asides} if usable else set()
+        plans.append((analysis, segments, fast, usable))
+
+    # Voice loudness over the whole chapter
+    measured = {}
+    for n, (analysis, segments, fast, usable) in enumerate(plans, start=1):
+        if usable:
+            for voice, value in audiopost.voice_loudness(work / f'chunk-{n:02}.mp3', segments).items():
+                measured.setdefault(voice, []).append(value)
+    gains, changed = {}, False
+    for voice in sorted({i['voice'] for c in chunks for i in c['inputs']}):
+        entry = voices.get(voice, {})
+        # A gain only holds for the voice it was measured on
+        stored = entry.get('gainDb') if entry.get('gainVoiceId') == entry.get('voiceId') else None
+        if voice in measured:
+            lufs, seconds = audiopost.combine_loudness(measured[voice])
+            computed = audiopost.gain_for(lufs)
+        else:
+            lufs = seconds = computed = None
+        if stored is not None and not recalibrate:
+            gains[voice], note = stored, 'stored'
+        elif computed is not None:
+            gains[voice] = round(computed, 1)
+            if seconds >= CALIBRATION_SECONDS:
+                voices[voice]['gainDb'] = gains[voice]
+                voices[voice]['gainVoiceId'] = voices[voice]['voiceId']
+                changed, note = True, 'calibrated'
+            else:
+                note = f'provisional, only {seconds:.0f} s of speech'
+        else:
+            gains[voice], note = 0.0, 'not measured'
+        level = f'{lufs:6.1f} LUFS over {seconds:5.1f} s' if lufs is not None else 'too little speech'
+        print(f'{voice:8} {level} -> gain {gains[voice]:+.1f} dB ({note})')
+    if changed and save:
+        save_voices(voices)
+        print('tts/voices.json: gainDb updated, commit it with the chapter')
+
+    rendered = []
+    for n, (analysis, segments, fast, usable) in enumerate(plans, start=1):
+        out = work / f'post-{n:02}.wav'
+        audiopost.render(work / f'chunk-{n:02}.mp3', segments, gains if usable else {}, fast, audiopost.TEMPO, out)
+        rendered.append(out)
+    joined = work / 'joined.wav'
+    starts = join(rendered, joined, encode=False)
+    final = work / f'{chapter["id"]}.mp3'
+    audiopost.finalize(joined, final)
+    joined.unlink()
+
+    # Exact paragraph starts: the first word of the paragraph in the final audio
+    lengths, word_counts = paragraph_lengths(chapter)
     times = [None] * len(lengths)
-    for chunk, start, n in zip(script['chunks'], starts, range(1, len(starts) + 1)):
+    for (analysis, segments, fast, usable), chunk, start, file in zip(plans, chunks, starts, rendered):
         first, last = chunk['paragraphs']
-        chunk_length = duration(work / f'chunk-{n:02}.mp3')
-        total = sum(lengths[p - 1] for p in range(first, last + 1)) or 1
-        before = 0
-        for p in range(first, last + 1):
-            if times[p - 1] is None:
-                times[p - 1] = round(start + chunk_length * before / total, 1)
-            before += lengths[p - 1]
-    return times
+        counts = word_counts[first - 1:last]
+        if usable and sum(counts) == len(analysis['words']):
+            mapped = audiopost.time_map(segments, fast, audiopost.TEMPO)
+            index = 0
+            for p, count in zip(range(first, last + 1), counts):
+                if times[p - 1] is None and count:
+                    times[p - 1] = round(start + mapped(analysis['times'][index][0]), 1)
+                index += count
+        else:  # a paragraph split across chunks, or a poor alignment
+            estimate_starts(times, lengths, chunk, start, duration(file))
+    sped = sum(len(fast) for _, _, fast, _ in plans)
+    print(f'{sped} narrator asides sped up by {audiopost.TEMPO}')
+    return final, times
 
 
 def publish(chapter, work):
@@ -132,7 +244,7 @@ def publish(chapter, work):
         raise SystemExit(f'Nothing to publish: generate the whole chapter first ({audio} is missing)')
     data = audio.read_bytes()
     folder = Path(chapter['textFile']).parent.name  # e.g. 1.gestation
-    key = f'{folder}/{chapter["id"]}-{hashlib.sha256(data).hexdigest()[:8]}.mp3'
+    key = f'{folder}/{chapter["id"]}-{sha256(data)[:8]}.mp3'
     url = r2.put_file(r2.config(), key, data, 'audio/mpeg')
 
     target = ROOT / 'assets' / 'timings' / f'{chapter["id"]}.json'
@@ -195,8 +307,8 @@ def main():
     texts = [' '.join(plain(i['text']) for i in c['inputs']) for c in chunks]
     for n in selected:
         chunk = chunks[n - 1]
-        fingerprint = hashlib.sha256(json.dumps([chunk['inputs'], [voice_ids[i['voice']] for i in chunk['inputs']],
-                                                 script['model_id'], OUTPUT_FORMAT], ensure_ascii=False).encode()).hexdigest()
+        fingerprint = sha256(json.dumps([chunk['inputs'], [voice_ids[i['voice']] for i in chunk['inputs']],
+                                         script['model_id'], OUTPUT_FORMAT], ensure_ascii=False).encode())
         file = work / f'chunk-{n:02}.mp3'
         if file.is_file() and manifest.get(str(n), {}).get('hash') == fingerprint and n not in retake:
             continue
@@ -215,13 +327,22 @@ def main():
     if len(ready) < count:
         print('The chapter is joined once every chunk is ready.')
         return
-    out, starts = join(work, chapter['id'], count)
-    times = paragraph_timings(chapter, script, starts, work)
+
+    if '--no-post' in args:
+        out = work / f'{chapter["id"]}.mp3'
+        files = [work / f'chunk-{n:02}.mp3' for n in range(1, count + 1)]
+        starts = join(files, out)
+        lengths, _ = paragraph_lengths(chapter)
+        times = [None] * len(lengths)
+        for chunk, start, file in zip(chunks, starts, files):
+            estimate_starts(times, lengths, chunk, start, duration(file))
+    else:
+        out, times = post_process(chapter, script, work, voices, recalibrate='--recalibrate' in args)
     total = duration(out)
     (work / 'timings.json').write_text(json.dumps({'chapter': chapter['id'], 'duration': round(total, 1),
                                                     'paragraphs': times}) + '\n')
-    print(f'{out.relative_to(ROOT)}: {total / 60:.1f} min, {out.stat().st_size / 1048576:.1f} MB. '
-          f'Listen, retake chunks if needed, then run with --publish.')
+    print(f'{out.relative_to(ROOT)}: {total / 60:.1f} min, {out.stat().st_size / 1048576:.1f} MB, '
+          f'{audiopost.measure(out)[0]:.1f} LUFS. Listen, retake chunks if needed, then run with --publish.')
 
 
 if __name__ == '__main__':

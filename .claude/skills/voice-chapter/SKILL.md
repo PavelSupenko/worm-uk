@@ -11,8 +11,9 @@ every voice used in the chapter needs a `voiceId` there (ask the user to pick on
 ## 0. Before you start
 
 - `python3 tools/check_chapters.py` must pass: the voiceover is generated from the chapter text.
-- `ELEVENLABS_API_KEY` must be in the environment (and the `R2_*` variables for publishing). If a
-  variable is missing, ask the user to restart Claude Code: they live in `~/.zshrc`. Never print them.
+- `tools/setup.sh` must pass on this machine: it installs ffmpeg and whisper.cpp with its model (local
+  post-processing) and checks the credentials. `ELEVENLABS_API_KEY` and the `R2_*` variables live in
+  `~/.zshrc`; if the session doesn't see them, ask the user to restart Claude Code. Never print them.
 
 ## 1. Tag
 
@@ -35,9 +36,16 @@ it doesn't fit; a chapter is usually 10,000–15,000 characters, each retake cos
 python3 tools/voice_chapter.py <id>
 ```
 
-It sends one Text to Dialogue request per chunk, skips chunks that are already generated and
-unchanged, and when all chunks exist joins them into `tts/audio/<id>/<id>.mp3` with
-`timings.json` (paragraph start times). A chapter takes several minutes; run it in the background.
+It sends one Text to Dialogue request per chunk and skips chunks that are already generated and
+unchanged. When all chunks exist it post-processes them locally (whisper.cpp alignment, narrator asides
+sped up 1.15×, one gain per voice, -18 LUFS) into `tts/audio/<id>/<id>.mp3` with `timings.json` (exact
+paragraph starts). A chapter takes several minutes; run it in the background.
+
+- The output lists every voice's loudness and gain. "calibrated" means the gain was stored in
+  `tts/voices.json` (commit it with the chapter); "provisional" means the voice spoke too little to
+  calibrate. Report gains that hit ±8 dB: such a voice may be a poor match for the cast.
+- A chunk with less than 85% of its words aligned is left unprocessed; mention it to the user.
+- `--no-post` joins the raw chunks; `--recalibrate` measures the voices again.
 
 ## 4. Listen and fix
 
@@ -61,6 +69,9 @@ python3 tools/check_chapters.py
 ```
 
 This uploads the MP3 to R2 under a content-hashed name, writes `assets/timings/<id>.json` and points
-`audioFile` in `assets/chapters.json` at the R2 URL. Commit the tagged script, `chapters.json` and the
-timings ("Add voiceover for <id>"), push, and check after the deploy that the chapter page plays the
+`audioFile` in `assets/chapters.json` at the R2 URL. Commit the tagged script, `chapters.json`, the
+timings and `tts/voices.json` if gains were calibrated ("Add voiceover for <id>"), push, and check after the deploy that the chapter page plays the
 new audio. If the chapter had an old MP3 in `audio/`, ask the user before removing it from the repository.
+
+Anything learned while voicing (a tag that works, a pronunciation trick, a new rule) goes into
+`docs/voiceover-pipeline.md` and, if it is a rule for the agent, into the `tts-tags` skill.

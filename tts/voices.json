@@ -1,9 +1,9 @@
 {
     "Reader": {"description": "Нейтральний оповідач: примітки автора, інтерлюдії від третьої особи", "voiceName": "Bradford", "voiceId": "NNl6r8mD7vthiJatiJt1"},
-    "Taylor": {"description": "Тейлор Геберт, 15 років, оповідачка основних глав; стримана, спостережлива, іронічна", "voiceName": "Danielle", "voiceId": "FVQMzxJGPUBtfz1Azdoy"},
+    "Taylor": {"description": "Тейлор Геберт, 15 років, оповідачка основних глав; стримана, спостережлива, іронічна", "voiceName": "Arabella", "voiceId": "aEO01A4wXwd1O8GPgGlF"},
     "Gladly": {"description": "Містер Гледлі, учитель; бадьорий, хоче здаватися своїм для учнів", "voiceName": "Mark", "voiceId": "1SM7GgM6IMuvQlz2BwM3"},
     "Lung": {"description": "Лун, дорослий чоловік, лідер банди; низький голос, сильний акцент", "voiceName": "Rob", "voiceId": "2ajXGJNYBR0iNHpS4VZb"},
     "Brian": {"description": "Ґрю/Морок, юнак ~17 років; спокійний, низький, впевнений", "voiceName": "Johnny Kid", "voiceId": "8JVbfL6oEdmuxKn5DK2C"},
-    "Lisa": {"description": "Татлтейл/Наклепниця, дівчина ~16 років; жвава, глузлива", "voiceName": "Ember", "voiceId": "WtA85syCrJwasGeHGH2p"},
+    "Lisa": {"description": "Татлтейл/Наклепниця, дівчина ~16 років; жвава, глузлива", "voiceName": "Caty", "voiceId": "54Cze5LrTSyLgbO6Fhlc"},
     "Alec": {"description": "Регент, хлопець ~16 років; млявий, саркастичний", "voiceName": "Haven Sands", "voiceId": "x8xv0H8Ako6Iw3cKXLoC"}
 }
