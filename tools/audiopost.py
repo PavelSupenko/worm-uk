@@ -9,6 +9,7 @@ one chunk, for experiments:
         [--no-tempo] [--no-balance] [--inputs 4-11] [--out OUT.mp3]
 
 --inputs limits the text to some inputs of the chunk, for audio that voices only them.
+--no-tempo leaves out both speed-ups (asides and CHAPTER_TEMPO).
 
 1. whisper.cpp transcribes the audio with a time for every word; the words are
    matched to the known text (tolerant to recognition mistakes), which gives
@@ -20,6 +21,9 @@ one chunk, for experiments:
 4. Every voice gets one constant gain towards VOICE_LUFS, so the voices sound
    equally loud while a shout stays louder than a whisper. The result is then
    brought to TARGET_LUFS with one linear gain under the true-peak limit.
+5. The silence at the start and end of a chunk is cut down to EDGE_SILENCE, so
+   a join between chunks sounds like any pause inside a chunk, and the whole
+   chapter is sped up by CHAPTER_TEMPO at the end.
 """
 import difflib
 import json
@@ -36,7 +40,10 @@ from export_tts import ACUTE, DEFAULT_LIMIT, TAG, build_script
 
 MODEL = Path(os.environ.get('WHISPER_MODEL_DIR', Path.home() / '.cache' / 'whisper')) / 'ggml-large-v3-turbo-q5_0.bin'
 TEMPO = 1.15             # speed of the narrator's asides (chosen by ear on 1.5)
+CHAPTER_TEMPO = 1.05     # speed of the whole chapter, applied last (chosen by ear on 1.5)
 MIN_ASIDE_WORDS = 4
+SILENCE_DB = -50         # quieter than this counts as silence at the edges of a chunk
+EDGE_SILENCE = 0.1       # silence kept at the start and end of a chunk (pauses inside are 0.25-0.5 s)
 VOICE_LUFS = -20.0       # every voice is moved towards this loudness
 MAX_GAIN_DB = 8.0        # never move a voice by more than this
 TARGET_LUFS = -18.0      # usual loudness for spoken-word audio
@@ -44,6 +51,8 @@ MAX_TRUE_PEAK = -1.0
 MIN_COVERAGE = 0.85      # below this share of aligned words a chunk is left as it is
 BITRATE = '64k'
 WORD = re.compile(r"[\w'’ʼ]+")
+PAUSE_AT_START = re.compile(r'^\s*\[[^\]]*pause[^\]]*\]', re.IGNORECASE)
+PAUSE_AT_END = re.compile(r'\[[^\]]*pause[^\]]*\]\s*$', re.IGNORECASE)
 
 
 def words_of(text):
@@ -119,6 +128,36 @@ def segments_of(analysis, inputs):
         cuts.append((end + start) / 2 if start > end else start)
     cuts.append(analysis['duration'])
     return [(cuts[i], max(cuts[i], cuts[i + 1]), item['voice']) for i, item in enumerate(inputs)]
+
+
+def sound_edges(audio):
+    """(start, end) of the sound in the file: where the leading silence ends and
+    the trailing one starts (ffmpeg silencedetect)."""
+    total = duration(audio)
+    out = subprocess.run(['ffmpeg', '-nostats', '-i', str(audio), '-af', f'silencedetect=noise={SILENCE_DB}dB:d=0.05',
+                          '-f', 'null', '-'], capture_output=True, text=True).stderr
+    starts = [float(x) for x in re.findall(r'silence_start: (-?[\d.]+)', out)]
+    ends = [float(x) for x in re.findall(r'silence_end: ([\d.]+)', out)]
+    first = ends[0] if starts and ends and starts[0] <= 0.01 else 0.0
+    # The trailing silence has no end, or one at the end of the file
+    trailing = starts and (len(ends) < len(starts) or ends[-1] >= total - 0.01)
+    last = starts[-1] if trailing and starts[-1] > first else total
+    return first, last
+
+
+def trim_edges(segments, audio, inputs):
+    """Cuts the silence at the start and end of a chunk down to EDGE_SILENCE, so a
+    join between chunks sounds like a pause inside one. A pause tag at the edge
+    keeps its silence."""
+    first, last = sound_edges(audio)
+    segments = list(segments)
+    start, end, voice = segments[0]
+    if not PAUSE_AT_START.match(inputs[0]['text']):
+        segments[0] = (min(max(start, first - EDGE_SILENCE), end), end, voice)
+    start, end, voice = segments[-1]
+    if not PAUSE_AT_END.search(inputs[-1]['text']):
+        segments[-1] = (start, max(start, min(end, last + EDGE_SILENCE)), voice)
+    return segments
 
 
 def aside_keys(chapter):
@@ -212,12 +251,19 @@ def time_map(segments, fast, tempo):
     return mapped
 
 
-def finalize(wav, out):
-    """One linear gain to TARGET_LUFS under the true-peak limit, MP3 encode."""
-    lufs, peak = measure(wav)
-    gain = 0.0 if lufs is None else min(TARGET_LUFS - lufs, MAX_TRUE_PEAK - (peak if peak is not None else -99))
-    subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', str(wav), '-af', f'volume={gain:.2f}dB',
-                    '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', BITRATE, str(out)], check=True)
+def finalize(wav, out, tempo=CHAPTER_TEMPO):
+    """Speeds the whole audio up by tempo, then one linear gain to TARGET_LUFS
+    under the true-peak limit, MP3 encode."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source = wav
+        if tempo != 1.0:
+            source = Path(tmp) / 'tempo.wav'
+            subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', str(wav), '-af', f'atempo={tempo}',
+                            '-c:a', 'pcm_s16le', str(source)], check=True)
+        lufs, peak = measure(source)
+        gain = 0.0 if lufs is None else min(TARGET_LUFS - lufs, MAX_TRUE_PEAK - (peak if peak is not None else -99))
+        subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', str(source), '-af', f'volume={gain:.2f}dB',
+                        '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', BITRATE, str(out)], check=True)
     return gain
 
 
@@ -235,7 +281,7 @@ def main():
 
     analysis = analyse(audio, inputs)
     print(f'aligned {analysis["coverage"]:.0%} of the words')
-    segments = segments_of(analysis, inputs)
+    segments = trim_edges(segments_of(analysis, inputs), audio, inputs)
     asides = aside_keys(chapter)
     fast = {i for i, item in enumerate(inputs) if aside_key(item['text']) in asides}
     gains = {}
@@ -246,7 +292,7 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         wav = Path(tmp) / 'mix.wav'
         render(audio, segments, gains, fast, tempo, wav)
-        finalize(wav, out)
+        finalize(wav, out, 1.0 if '--no-tempo' in args else CHAPTER_TEMPO)
     for i in sorted(fast):
         start, end, voice = segments[i]
         print(f'aside {i + 1} ({voice}): {end - start:.1f} s -> {(end - start) / tempo:.1f} s')

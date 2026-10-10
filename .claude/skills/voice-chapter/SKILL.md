@@ -38,8 +38,9 @@ python3 tools/voice_chapter.py <id>
 
 It sends one Text to Dialogue request per chunk and skips chunks that are already generated and
 unchanged. When all chunks exist it post-processes them locally (whisper.cpp alignment, narrator asides
-sped up 1.15×, one gain per voice, -18 LUFS) into `tts/audio/<id>/<id>.mp3` with `timings.json` (exact
-paragraph starts). A chapter takes several minutes; run it in the background.
+sped up 1.15×, one gain per voice, chunk edges trimmed, the whole chapter sped up 1.05×, -18 LUFS) into
+`tts/audio/<id>/<id>.mp3` with `timings.json` (exact paragraph starts). A chapter takes several minutes;
+run it in the background.
 
 - The output lists every voice's loudness and gain. "calibrated" means the gain was stored in
   `tts/voices.json` (commit it with the chapter); "provisional" means the voice spoke too little to
