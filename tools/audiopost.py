@@ -3,7 +3,9 @@
 recognition (whisper.cpp, installed by tools/setup.sh).
 
     python3 tools/audiopost.py CHUNK.mp3 --chapter 1.5 --chunk 7 [--tempo 1.2]
-        [--no-tempo] [--no-balance] [--out OUT.mp3]
+        [--no-tempo] [--no-balance] [--inputs 4-11] [--out OUT.mp3]
+
+--inputs limits the text to some inputs of the chunk, for audio that voices only them.
 
 1. whisper.cpp transcribes the audio with a time for every word; the words are
    matched to the chunk's known text (tolerant to recognition mistakes), which
@@ -133,6 +135,9 @@ def main():
     out = Path(option('--out', audio.with_name(audio.stem + ' (processed).mp3')))
 
     inputs = build_script(chapter, DEFAULT_LIMIT)['chunks'][number - 1]['inputs']
+    if option('--inputs'):
+        first, last = map(int, option('--inputs').split('-'))
+        inputs = inputs[first - 1:last]
     spans, coverage = align(inputs, transcribe(audio))
     total = duration(audio)
     print(f'aligned {coverage:.0%} of the words')
