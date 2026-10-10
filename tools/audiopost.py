@@ -28,7 +28,7 @@ from chapterlib import chapter_root, find_chapter, read_chapter, voice_runs
 from export_tts import ACUTE, DEFAULT_LIMIT, TAG, build_script
 
 MODEL = Path(os.environ.get('WHISPER_MODEL_DIR', Path.home() / '.cache' / 'whisper')) / 'ggml-large-v3-turbo-q5_0.bin'
-TEMPO = 1.2            # speed of the narrator's asides
+TEMPO = 1.15           # speed of the narrator's asides (chosen by ear on 1.5)
 MIN_ASIDE_WORDS = 4
 MAX_GAIN_DB = 8.0      # never move a voice by more than this
 TARGET_LUFS = -18.0    # usual loudness for spoken-word audio
