@@ -25,8 +25,9 @@ with its text; narrator asides inside a character's line are sped up, and every
 voice gets its constant gain. The gain is measured once over a chapter where the
 voice speaks for at least CALIBRATION_SECONDS and stored as gainDb in
 tts/voices.json together with the voiceId it was measured for (gainVoiceId), so
-voices keep the same level across chapters and a recast voice is measured again. The chapter is
-brought to -18 LUFS and encoded once at 64 kbps; timings.json holds the exact
+voices keep the same level across chapters and a recast voice is measured again. The silence at
+the edges of every chunk is trimmed, so joins sound like pauses inside a chunk; the chapter is
+sped up by audiopost.CHAPTER_TEMPO, brought to -18 LUFS and encoded once at 64 kbps; timings.json holds the exact
 start of every paragraph (its first word) in the final audio.
 
 Work files are in tts/audio/<id>/ (not committed): chunk-NN.mp3, manifest.json,
@@ -54,7 +55,7 @@ API = 'https://api.elevenlabs.io/v1/text-to-dialogue'
 OUTPUT_FORMAT = 'mp3_44100_128'
 LANGUAGE = 'uk'
 CONTEXT_CHARS = 100        # API limit for previous_text / future_text
-CHUNK_PAUSE = 0.4          # seconds of silence between chunks (they end on a paragraph)
+CHUNK_PAUSE = 0.25         # silence between chunks on top of their trimmed edges (they end on a paragraph)
 CALIBRATION_SECONDS = 20   # speech a voice needs in a chapter before its gain is stored
 
 duration = audiopost.duration
@@ -166,6 +167,8 @@ def post_process(chapter, script, work, voices, recalibrate=False, save=True):
         if not usable:
             print(f'chunk {n}: only {analysis["coverage"]:.0%} of the words aligned, left unprocessed')
         segments = audiopost.segments_of(analysis, chunk['inputs'])
+        if usable:
+            segments = audiopost.trim_edges(segments, work / f'chunk-{n:02}.mp3', chunk['inputs'])
         fast = {i for i, item in enumerate(chunk['inputs']) if audiopost.aside_key(item['text']) in asides} if usable else set()
         plans.append((analysis, segments, fast, usable))
 
@@ -225,12 +228,13 @@ def post_process(chapter, script, work, voices, recalibrate=False, save=True):
             index = 0
             for p, count in zip(range(first, last + 1), counts):
                 if times[p - 1] is None and count:
-                    times[p - 1] = round(start + mapped(analysis['times'][index][0]), 1)
+                    times[p - 1] = round((start + mapped(analysis['times'][index][0])) / audiopost.CHAPTER_TEMPO, 1)
                 index += count
         else:  # a paragraph split across chunks, or a poor alignment
-            estimate_starts(times, lengths, chunk, start, duration(file))
+            estimate_starts(times, lengths, chunk, start / audiopost.CHAPTER_TEMPO,
+                            duration(file) / audiopost.CHAPTER_TEMPO)
     sped = sum(len(fast) for _, _, fast, _ in plans)
-    print(f'{sped} narrator asides sped up by {audiopost.TEMPO}')
+    print(f'{sped} narrator asides sped up by {audiopost.TEMPO}, the chapter by {audiopost.CHAPTER_TEMPO}')
     return final, times
 
 
