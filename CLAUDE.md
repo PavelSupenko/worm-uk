@@ -24,11 +24,11 @@ python3 tools/export_tts.py <id>                 # voiceover script for ElevenLa
 python3 tools/export_tts.py <id> --check tts/<id>.tagged.json
 python3 tools/voice_chapter.py <id> [--chunks 3-4] [--retake 3] [--publish]   # generate / publish the voiceover
 python3 tools/r2.py check|list                  # Cloudflare R2 access for the voiceover files
-python3 tools/audiopost.py CHUNK.mp3 --chapter <id> --chunk N   # prototype: speed up asides, balance voices
+python3 tools/audiopost.py CHUNK.mp3 --chapter <id> --chunk N   # post-process one chunk (experiments)
 tools/setup.sh                                  # prepare a machine (see "Outside the repository")
 ```
 
-Run the validator before committing changes to chapters or names; it exits with code 1 on errors. Three project skills cover the content workflow: `.claude/skills/translate-chapter` (translate a new chapter straight into the markup), `.claude/skills/tts-tags` (add ElevenLabs audio tags) and `.claude/skills/voice-chapter` (generate, review and publish the voiceover). `ROADMAP.md` tracks planned work.
+Run the validator before committing changes to chapters or names; it exits with code 1 on errors. Three project skills cover the content workflow: `.claude/skills/translate-chapter` (translate a new chapter straight into the markup), `.claude/skills/tts-tags` (add ElevenLabs audio tags) and `.claude/skills/voice-chapter` (generate, review and publish the voiceover). `ROADMAP.md` tracks planned work. `docs/voiceover-pipeline.md` describes the whole voiceover process and what was learned while building it, in a form the user reuses for other books and game dubbing: keep it current when the pipeline changes.
 
 The live site is GitHub Pages for `origin` (`PavelSupenko/worm-uk`, default branch `master`), deployed by `.github/workflows/pages.yml`: the validator runs first and the site only updates when it passes. `tools/build_site.sh` assembles the published files (pages, `js`, `assets`, `texts`, `audio`; tools, `tts` and docs are not published) and stamps the commit hash into module, stylesheet, icon and data URLs through `js/version.js`, so browsers never mix files from two deploys. Assume a push to `master` goes live within a few minutes.
 
@@ -88,8 +88,9 @@ Target: ElevenLabs Eleven v4 (`eleven_v4`, supports Ukrainian) through the Text 
 
 1. `tools/export_tts.py <id>` turns the chapter into `tts/<id>.json`: chunks of whole paragraphs (under 1800 characters, leaving room for tags), each split into inputs by voice, with localized names. Not committed.
 2. The `tts-tags` skill writes `tts/<id>.tagged.json` with audio tags added; `--check` guarantees the words are unchanged. Committed.
-3. `tools/voice_chapter.py <id>` sends one Text to Dialogue request per chunk (voices mapped through `voiceId` in `tts/voices.json`, `previous_text`/`future_text` for continuity across chunks), skips unchanged chunks, then decodes and joins them with a short pause into one 64 kbps mono MP3 in `tts/audio/<id>/` (not committed), plus `timings.json`: paragraph start times (exact at chunk starts, estimated by character share inside a chunk) for the future text and audio sync.
-4. `--publish` uploads the MP3 to R2 under a content-hashed name, writes `assets/timings/<id>.json` and sets `audioFile` to the R2 URL. Publish only what the user has listened to and approved.
+3. `tools/voice_chapter.py <id>` sends one Text to Dialogue request per chunk (voices mapped through `voiceId` in `tts/voices.json`, `previous_text`/`future_text` for continuity across chunks, stress marks applied) and skips chunks that didn't change.
+4. Once every chunk exists it post-processes them locally with `tools/audiopost.py`: whisper.cpp word timestamps matched to the chunk text locate every turn; narrator asides (narration between two parts of one character's line in a paragraph) are sped up 1.15× with `atempo`, because Eleven v4 ignores speed tags; every voice gets one constant gain towards -20 LUFS (dynamics inside a voice are kept). A voice's gain is measured on the first chapter where it speaks for 20 s or more and stored in `tts/voices.json` as `gainDb` with the `gainVoiceId` it was measured on, so levels stay consistent across chapters and a recast voice is measured again (`--recalibrate` forces it). The chapter is brought to -18 LUFS (true peak -1 dBTP) and encoded once as a 64 kbps mono MP3 in `tts/audio/<id>/` (not committed), with `timings.json`: the exact start of every paragraph in the final audio, for text and audio sync. `--no-post` joins the raw chunks instead.
+5. `--publish` uploads the MP3 to R2 under a content-hashed name, writes `assets/timings/<id>.json` and sets `audioFile` to the R2 URL. Publish only what the user has listened to and approved.
 
 Stress: Eleven v4 follows a combining acute (U+0301) after the stressed vowel. `tts/stress.txt` lists words and phrases that need it (stressed vowel in capitals, e.g. `сУкою`, `укУси ос`); the export and the generator add the marks to the voiceover text only, never to the chapter. Homographs are marked per occurrence in the tagged script; `--check` ignores stress marks.
 
@@ -101,7 +102,7 @@ Audio hosting: the voiceover is moving to Cloudflare R2 (bucket `worm-uk-audio`,
 
 Everything the tools need beyond the repo is restored on a new Mac by `tools/setup.sh` (safe to re-run): Homebrew packages `ffmpeg` and `whisper.cpp` (local speech recognition), the whisper model `ggml-large-v3-turbo-q5_0.bin` in `~/.cache/whisper` (downloaded from the whisper.cpp Hugging Face repo, SHA-256 pinned in the script; `WHISPER_MODEL_DIR` overrides the folder), and a check of the credentials listed under "Voiceover pipeline", which the user keeps in `~/.zshrc`. Anything new that has to live outside the repo goes into that script.
 
-Post-processing (prototype, `tools/audiopost.py`): whisper.cpp gives word times for a generated chunk, which are matched to the chunk's text. That locates every turn, so narrator asides (narration between two parts of one character's line in a paragraph) can be sped up with `atempo` (Eleven v4 ignores speed tags), and each voice gets one constant gain to balance the voices without flattening their dynamics, followed by one linear gain to -18 LUFS. Not yet part of `voice_chapter.py`.
+`tts/voices.json` maps a voice key to `description`, `voiceName`, `voiceId` and, once calibrated, `gainDb`/`gainVoiceId`. Interrupted lines are tagged `[breaks off mid-sentence]` … `[resuming, …]` (see the `tts-tags` skill).
 
 ## Chapter workflow (from git history)
 
