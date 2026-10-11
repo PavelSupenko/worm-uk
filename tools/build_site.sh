@@ -10,7 +10,7 @@ version=$2
 
 rm -rf "$out"
 mkdir -p "$out"
-cp -R index.html chapter_template.html styles.css js assets texts audio "$out"/
+cp -R index.html chapter_template.html styles.css js assets texts "$out"/
 
 perl -pi -e "s#(from '\./[\w-]+\.js)'#\1?v=$version'#g" "$out"/js/*.js
 perl -pi -e "s#((?:src|href)=\"(?:js/[\w-]+\.js|styles\.css|assets/[\w-]+\.svg))#\1?v=$version#g" "$out"/*.html
