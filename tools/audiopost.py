@@ -45,6 +45,8 @@ CHAPTER_TEMPO = 1.05     # speed of the whole chapter, applied last (chosen by e
 MIN_ASIDE_WORDS = 4
 SILENCE_DB = -50         # quieter than this counts as silence at the edges of a chunk
 EDGE_SILENCE = 0.1       # silence kept at the start and end of a chunk (pauses inside are 0.25-0.5 s)
+LEAK_SECONDS = 0.25      # a sound this short after LEAK_PAUSE at the end of a chunk is cut
+LEAK_PAUSE = 0.25        # (on 1.5: 0.12-0.16 s of the next chunk's first word after 0.37-0.46 s)
 VOICE_LUFS = -20.0       # every voice is moved towards this loudness
 MAX_GAIN_DB = 8.0        # never move a voice by more than this
 TARGET_LUFS = -18.0      # usual loudness for spoken-word audio
@@ -140,9 +142,15 @@ def sound_edges(audio):
     starts = [float(x) for x in re.findall(r'silence_start: (-?[\d.]+)', out)]
     ends = [float(x) for x in re.findall(r'silence_end: ([\d.]+)', out)]
     first = ends[0] if starts and ends and starts[0] <= 0.01 else 0.0
-    # The trailing silence has no end, or one at the end of the file
-    trailing = starts and (len(ends) < len(starts) or ends[-1] >= total - 0.01)
-    last = starts[-1] if trailing and starts[-1] > first else total
+    last = total
+    if starts:
+        # The trailing silence has no end, or one at the end of the file
+        trailing = len(ends) < len(starts) or ends[-1] >= total - 0.01
+        # A short sound after a pause at the very end is the model starting on the
+        # next chunk's text (future_text) before the audio was cut off
+        leaked = not trailing and total - ends[-1] < LEAK_SECONDS and ends[-1] - starts[-1] >= LEAK_PAUSE
+        if (trailing or leaked) and starts[-1] > first:
+            last = starts[-1]
     return first, last
 
 
