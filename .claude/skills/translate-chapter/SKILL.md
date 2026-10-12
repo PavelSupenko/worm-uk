@@ -46,6 +46,7 @@ English original to the repository: only the translation goes in.
 ## 5. New names and voices
 
 - A new cape, team or term: add an entry to `assets/names.json` with `category`, a complete `localized` table (7 cases × 2 numbers), `translit` (a string if it doesn't decline) and `original` (only if it differs from the key). Keep the file's one-line-per-table format.
+- Every new name, cape or civilian, gets its stress in `tts/stress.txt`: each form of two or more syllables on its own line with the stressed vowel in capitals (`зброЯр`, `зброярА`, `Емма`, `Еммою`), under the `# Names` section. For a cape that is every form of the `localized` table; for a civilian name the forms the text uses. Ask the user when the stress is unclear (foreign names especially), and list the stresses you chose in the final report.
 - Propose the localized translation yourself, but list every new name in the final report so the user can approve or change it before the chapter is published.
 - A new speaking character: add it to `tts/voices.json` with a short description (age, gender, manner of speech) and `"voiceName": null, "voiceId": null`; the user picks the ElevenLabs voice later. Use one consistent English key per person.
 

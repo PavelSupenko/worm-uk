@@ -21,18 +21,28 @@ Warnings:
   - a capitalized name form appears in the text without any name markup
   - an attribution ("— сказала вона —") sits inside a data-voice span
   - a names.json entry is not used in any chapter
+  - a name (data-name, or a capitalized data-character) has a word of two or
+    more syllables without a stress in tts/stress.txt
 """
 import re
 import sys
 
 from chapterlib import (CASES, FORMS, NAMES_FILE, ROOT, VOICES_FILE, Element, all_forms,
                         chapter_root, dump_names, load_chapters, load_json, pick, read_chapter)
+from export_tts import ACUTE, apply_stress
 
 SETS = ('localized', 'translit', 'original')
 WORD = r"[\w'’ʼ-]"
 # A quote that closes, a dash, then narration (and maybe a reopening quote): an attribution
 ATTRIBUTION = re.compile(r'[”"]\s*—\s*[^“"”]+?—\s*[“"]|[”"]\s*—\s*[^“"”]+$')
 INLINE_TAGS = {'span', 'i', 'em', 'b', 'strong', 'br'}
+VOWELS = set('аеєиіїоуюя')
+
+
+def unstressed(text):
+    """Words of two or more syllables that tts/stress.txt gives no stress."""
+    return [word for word in re.findall(rf'{WORD}+', text)
+            if sum(ch in VOWELS for ch in word.lower()) >= 2 and ACUTE not in apply_stress(word)]
 
 
 def value_problems(value, complete):
@@ -83,6 +93,7 @@ def check_chapter(chapter, names, voices, errors, warnings, first_seen):
         errors.append(f'{rel}: text outside of <p> paragraphs')
 
     spans = 0
+    reported = set()
     for paragraph in root.elements():
         if paragraph.tag != 'p':
             errors.append(f'{rel}:{paragraph.line}: <{paragraph.tag}> directly in the chapter, expected <p>')
@@ -101,6 +112,12 @@ def check_chapter(chapter, names, voices, errors, warnings, first_seen):
             if 'data-name' in element.attrs:
                 spans += 1
                 check_name(element, where, names, errors, first_seen, chapter['id'])
+            name_key = element.attrs.get('data-name') or element.attrs.get('data-character')
+            if 'data-name' in element.attrs or element.text()[:1].isupper() and name_key:
+                for word in unstressed(element.text()):
+                    if word not in reported:
+                        reported.add(word)
+                        warnings.append(f'{where}: "{word}" ({name_key}) has no stress in tts/stress.txt')
             if 'data-character' in element.attrs:
                 entry = names.get(element.attrs['data-character'])
                 text = element.text().strip('"“”')
