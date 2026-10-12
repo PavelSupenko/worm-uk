@@ -10,7 +10,8 @@
             },
             {
                 "id": "1.2",
-                "textFile": "texts/1.gestation/1.2.html"
+                "textFile": "texts/1.gestation/1.2.html",
+                "audioFile": "https://pub-63aa60752c1f4a77a9e67681b57193db.r2.dev/1.gestation/1.2-5a90120a.mp3"
             },
             {
                 "id": "1.3",
