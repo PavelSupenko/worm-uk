@@ -5,7 +5,8 @@
         "chapters": [
             {
                 "id": "1.1",
-                "textFile": "texts/1.gestation/1.1.html"
+                "textFile": "texts/1.gestation/1.1.html",
+                "audioFile": "https://pub-63aa60752c1f4a77a9e67681b57193db.r2.dev/1.gestation/1.1-8a7985e0.mp3"
             },
             {
                 "id": "1.2",
