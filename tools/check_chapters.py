@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Checks chapter markup against assets/chapters.json, assets/names.json and
-tts/voices.json.
+"""Checks chapter markup against assets/chapters.json, assets/names.json,
+assets/glossary.json and tts/voices.json.
 
 Usage:
     python3 tools/check_chapters.py          # report problems, exit 1 on errors
-    python3 tools/check_chapters.py --fix    # also rewrite firstSeen in names.json
+    python3 tools/check_chapters.py --fix    # also rewrite firstSeen in names.json and glossary.json
 
 Errors (must be fixed):
   - files listed in chapters.json are missing
@@ -17,13 +17,18 @@ Errors (must be fixed):
   - a data-name span contains nested tags (replacement would drop them)
   - data-character wraps a form of a name from names.json (use data-name)
   - names.json entries with incomplete declension tables or a wrong firstSeen
+  - glossary.json describes a key missing from names.json, or a character
+    (data-character key) whose firstSeen is later than its first markup (it can
+    be earlier: the narrator rarely says her own name)
 Warnings:
   - a capitalized name form appears in the text without any name markup
   - an attribution ("— сказала вона —") sits inside a data-voice span
   - a names.json entry is not used in any chapter
+  - a names.json entry has no description in glossary.json
   - a name (data-name, or a capitalized data-character) has a word of two or
     more syllables without a stress in tts/stress.txt
 """
+import json
 import re
 import sys
 
@@ -31,6 +36,7 @@ from chapterlib import (CASES, FORMS, NAMES_FILE, ROOT, VOICES_FILE, Element, al
                         chapter_root, dump_names, load_chapters, load_json, pick, read_chapter)
 from export_tts import ACUTE, apply_stress
 
+GLOSSARY_FILE = ROOT / 'assets' / 'glossary.json'
 SETS = ('localized', 'translit', 'original')
 WORD = r"[\w'’ʼ-]"
 # A quote that closes, a dash, then narration (and maybe a reopening quote): an attribution
@@ -163,6 +169,46 @@ def check_name(element, where, names, errors, first_seen, chapter_id):
             errors.append(f'{where}: {key} ({form}, {name_case}): text "{text}", localized form is "{expected}"')
 
 
+def check_glossary(chapters, names, errors, warnings, fix):
+    glossary = load_json(GLOSSARY_FILE)
+    for key in glossary['names']:
+        if key not in names:
+            errors.append(f'glossary.json: {key} is not in names.json')
+    for key in names:
+        if key not in glossary['names']:
+            warnings.append(f'glossary.json: no description for {key}')
+    order = {chapter['id']: i for i, chapter in enumerate(chapters)}
+    first_seen = {}
+    for chapter in chapters:
+        path = ROOT / chapter['textFile']
+        if path.is_file():
+            for key in re.findall(r'data-character="([^"]+)"', path.read_text(encoding='utf-8')):
+                first_seen.setdefault(key, chapter['id'])
+    changed = False
+    for key, entry in glossary['characters'].items():
+        actual = first_seen.get(key)
+        if actual is None:
+            errors.append(f'glossary.json: character {key} is not marked with data-character in any chapter')
+        elif order.get(entry.get('firstSeen'), len(order)) > order[actual]:
+            if fix:
+                entry['firstSeen'] = actual
+                changed = True
+            else:
+                errors.append(f'glossary.json: {key}: firstSeen is "{entry.get("firstSeen")}", '
+                              f'but marked already in {actual} (run with --fix)')
+    if changed:
+        GLOSSARY_FILE.write_text(dump_glossary(glossary), encoding='utf-8')
+
+
+def dump_glossary(glossary):
+    """glossary.json formatting: one line per entry."""
+    def section(items):
+        return ',\n'.join(f'        {json.dumps(key, ensure_ascii=False)}: {json.dumps(value, ensure_ascii=False)}'
+                           for key, value in items.items())
+    return (f'{{\n    "characters": {{\n{section(glossary["characters"])}\n    }},\n'
+            f'    "names": {{\n{section(glossary["names"])}\n    }}\n}}\n')
+
+
 def main():
     fix = '--fix' in sys.argv[1:]
     errors, warnings = [], []
@@ -210,6 +256,7 @@ def main():
                               f'first used in {actual} (run with --fix)')
     if fix:
         NAMES_FILE.write_text(dump_names(names_data), encoding='utf-8')
+    check_glossary(chapters, names, errors, warnings, fix)
 
     for message in warnings:
         print(f'warning: {message}')

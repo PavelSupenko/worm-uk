@@ -2,6 +2,7 @@
 // its "Читання" and "Імена" tabs. Defaults and applying to <html> live in
 // boot.js so they work before paint.
 import { focusName, renderNamesPanel } from './names-panel.js';
+import { initOfflineSection, offlineSection } from './offline-panel.js';
 import { save } from './storage.js';
 import { icon, setupDrawer } from './ui.js';
 
@@ -19,6 +20,7 @@ let settings = load();
 const listeners = new Set();
 let dialog = null;
 let namesReady = null;
+let refreshOffline = () => {};
 
 export function getSettings() {
     return settings;
@@ -37,7 +39,10 @@ export function updateSettings(patch) {
 
 // Opens the drawer, optionally on a tab and at one name's editor
 export async function openSettings({ tab = 'reading', nameKey = null } = {}) {
-    if (!dialog.open) dialog.showModal();
+    if (!dialog.open) {
+        dialog.showModal();
+        refreshOffline();
+    }
     selectTab(tab);
     if (nameKey) {
         await namesReady;
@@ -79,11 +84,13 @@ export function initSettingsPanel(openButton) {
                         <span>Виділяти імена кольором</span>
                     </label>
                 </section>
+                ${offlineSection()}
             </div>
             <div role="tabpanel" id="settings-panel-names" aria-labelledby="settings-tab-names" hidden></div>
         </div>`;
     document.body.append(dialog);
-    setupDrawer(dialog, openButton);
+    refreshOffline = initOfflineSection(dialog);
+    setupDrawer(dialog, openButton, () => refreshOffline());
 
     dialog.addEventListener('click', event => {
         const tab = event.target.closest('[data-tab]');

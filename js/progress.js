@@ -19,6 +19,15 @@ export function getChapterProgress(id) {
     return read().chapters[id] ?? {};
 }
 
+// Position in reading order of the furthest chapter the reader has opened
+// (0 for new readers). Names and glossary entries from later chapters stay
+// hidden so they don't spoil what comes next.
+export function furthestOpened(data) {
+    const index = new Map(data.chapters.map((chapter, i) => [chapter.id, i]));
+    const opened = Object.keys(read().chapters).map(id => index.get(id) ?? -1);
+    return Math.max(0, ...opened);
+}
+
 export function updateChapterProgress(id, patch) {
     const state = read();
     state.chapters[id] = { ...state.chapters[id], ...patch };

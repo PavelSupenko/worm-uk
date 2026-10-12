@@ -1,0 +1,16 @@
+{
+    "name": "Worm українською",
+    "short_name": "Worm",
+    "description": "Український переклад вебсеріалу Worm від Wildbow з озвучкою.",
+    "lang": "uk",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#18181a",
+    "theme_color": "#18181a",
+    "icons": [
+        {"src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+        {"src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+        {"src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml"}
+    ]
+}

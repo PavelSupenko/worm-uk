@@ -1,5 +1,5 @@
 // Loading of the chapter list and helpers for naming and linking chapters.
-import { versioned } from './version.js';
+import { VERSION, versioned } from './version.js';
 
 export async function fetchJSON(url) {
     const response = await fetch(versioned(url));
@@ -49,8 +49,11 @@ export function chapterTitle(chapter) {
     return `${chapter.arc.title} ${chapter.id}`;
 }
 
+// The deploy pre-renders every chapter as <id>.html (tools/build_pages.py);
+// locally the template page loads the chapter itself
 export function chapterUrl(chapter) {
-    return `chapter_template.html?ch=${encodeURIComponent(chapter.id)}`;
+    if (VERSION === 'dev') return `chapter_template.html?ch=${encodeURIComponent(chapter.id)}`;
+    return `${encodeURIComponent(chapter.id)}.html`;
 }
 
 export function isDraft(chapter) {

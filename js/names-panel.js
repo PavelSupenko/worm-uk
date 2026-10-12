@@ -7,7 +7,7 @@ import {
     loadNames, nameValue, onNamesChange, pickForm, removeCustomName, resetCustomNames,
     resolveName, setActiveSet, setBaseSet, setCustomName
 } from './names.js';
-import { getProgress } from './progress.js';
+import { furthestOpened } from './progress.js';
 import { escapeHtml } from './ui.js';
 
 const CASE_HINTS = {
@@ -127,8 +127,7 @@ function rowHtml(key) {
 async function readKeys() {
     const data = await loadChapters();
     const index = new Map(data.chapters.map((chapter, i) => [chapter.id, i]));
-    const opened = Object.keys(getProgress().chapters).map(id => index.get(id) ?? -1);
-    const furthest = Math.max(0, ...opened);
+    const furthest = furthestOpened(data);
     const keys = Object.entries(getDictionary().names)
         .filter(([, entry]) => (index.get(entry.firstSeen) ?? 0) <= furthest)
         .map(([key]) => key);

@@ -1,7 +1,9 @@
-// Entry point of chapter_template.html: loads the chapter named in the URL.
+// Entry point of chapter_template.html and the pre-rendered chapter pages.
+import { initAudioSync } from './audio-sync.js';
 import { loadChapters, fetchText, chapterTitle, chapterLabel, chapterUrl, isDraft } from './data.js';
 import { initNamePopover } from './name-popover.js';
 import { loadNames, applyNames } from './names.js';
+import { isAudioSaved, offlineSupported, registerServiceWorker, removeAudio, saveAudio, savedAudioUrl } from './offline.js';
 import { getChapterProgress, updateChapterProgress } from './progress.js';
 import { initSettingsPanel, getSettings, openSettings, updateSettings } from './settings.js';
 import { renderToc } from './toc.js';
@@ -14,8 +16,11 @@ const DONE_AT = 0.97;
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
-// ?ch=1.5; old links use ?major=1&sub=1.5
-const chapterId = params.get('ch') ?? params.get('sub');
+// Pre-rendered pages name their chapter on <body>; the template takes ?ch=1.5
+// (old links use ?major=1&sub=1.5)
+const chapterId = document.body.dataset.chapter ?? params.get('ch') ?? params.get('sub');
+// A pre-rendered page already holds the chapter text
+const prerendered = $('chapter-text').hasAttribute('data-prerendered');
 
 // The text arrives asynchronously, so the browser can't restore the position itself
 history.scrollRestoration = 'manual';
@@ -25,6 +30,7 @@ setupDrawer($('toc-dialog'), $('open-toc'), () => {
     $('toc-dialog').querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'center' });
 });
 autoHideTopbar($('topbar'));
+registerServiceWorker();
 main();
 
 async function main() {
@@ -46,18 +52,18 @@ async function main() {
     updateChapterProgress(chapter.id, {}); // remember as the last opened chapter
     renderHeading(chapter);
     renderNav(chapter);
-    renderAudio(chapter);
+    const audio = renderAudio(chapter);
 
-    let html;
+    const article = $('chapter-text');
     try {
-        [html] = await Promise.all([fetchText(chapter.textFile), namesReady]);
+        const [html] = await Promise.all([prerendered ? null : fetchText(chapter.textFile), namesReady]);
+        if (html !== null) article.innerHTML = html;
     } catch (err) {
         console.error(err);
         return showError('Не вдалося завантажити текст', 'Спробуйте оновити сторінку.');
     }
-    const article = $('chapter-text');
-    article.innerHTML = html;
     applyNames(article);
+    if (audio) initAudioSync({ audio, box: $('audio'), article, timingsUrl: `assets/timings/${chapter.id}.json` });
     initNamePopover(article, {
         onCustomize: key => openSettings({ tab: 'names', nameKey: key })
     });
@@ -104,12 +110,19 @@ function renderAudio(chapter) {
         return;
     }
     box.innerHTML = `
-        <audio controls preload="metadata" src="${escapeHtml(chapter.audioFile)}"></audio>
+        <audio controls preload="metadata"></audio>
         <div class="audio-rates" role="group" aria-label="Швидкість відтворення">
             <span class="audio-rates-label">Швидкість</span>
             ${AUDIO_RATES.map(rate => `<button class="chip chip--small" data-rate="${rate}">${String(rate).replace('.', ',')}×</button>`).join('')}
-        </div>`;
+        </div>
+        <div class="audio-offline" data-offline hidden></div>
+        <p class="audio-hint" data-sync-hint hidden>Натисніть на абзац, щоб слухати з нього.</p>`;
     const audio = box.querySelector('audio');
+    // A voiceover saved for offline listening plays from the device
+    savedAudioUrl(chapter.audioFile)
+        .catch(() => null)
+        .then(url => { audio.src = url ?? chapter.audioFile; });
+    renderOffline(box.querySelector('[data-offline]'), chapter);
 
     // Speed buttons: iOS Safari's native player has no speed control
     const showRate = () => box.querySelectorAll('[data-rate]').forEach(button => {
@@ -154,6 +167,42 @@ function renderAudio(chapter) {
             album: `Арка ${chapter.arc.id}: ${chapter.arc.title}`
         });
     }
+    return audio;
+}
+
+// "Завантажити": keeps the voiceover on the device for listening offline
+async function renderOffline(container, chapter) {
+    if (!offlineSupported) return;
+    const url = chapter.audioFile;
+    const render = async () => {
+        const saved = await isAudioSaved(url);
+        container.innerHTML = saved
+            ? `<span class="audio-offline-state">${icon('check')}Збережено для офлайну</span>
+               <button class="link-button" data-remove>Видалити</button>`
+            : `<button class="chip chip--small" data-save>${icon('download')}Завантажити для офлайну</button>`;
+        container.hidden = false;
+    };
+    container.addEventListener('click', async event => {
+        if (event.target.closest('[data-save]')) {
+            container.innerHTML = `<span class="audio-offline-state" data-progress>${icon('download')}Завантаження…</span>`;
+            const label = container.querySelector('[data-progress]');
+            try {
+                await saveAudio(url, fraction => {
+                    label.lastChild.textContent = `Завантаження… ${Math.round(fraction * 100)}%`;
+                });
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<span class="audio-offline-state">Не вдалося завантажити. Спробуйте ще раз.</span>`;
+                setTimeout(render, 3000);
+                return;
+            }
+            render();
+        } else if (event.target.closest('[data-remove]')) {
+            await removeAudio(url);
+            render();
+        }
+    });
+    render().catch(err => console.error(err));
 }
 
 function scrollMax() {

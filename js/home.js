@@ -1,11 +1,13 @@
 // Entry point of index.html: "continue reading" button and the chapter list.
 import { loadChapters, chapterTitle, chapterUrl } from './data.js';
+import { registerServiceWorker } from './offline.js';
 import { getProgress } from './progress.js';
 import { initSettingsPanel } from './settings.js';
 import { renderToc } from './toc.js';
 import { icon, escapeHtml } from './ui.js';
 
 initSettingsPanel(document.getElementById('open-settings'));
+registerServiceWorker();
 
 loadChapters()
     .then(data => {

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глосарій — Worm українською</title>
+    <meta name="description" content="Персонажі, команди й терміни українського перекладу Worm без спойлерів: показано лише тих, кого ви вже зустріли.">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#18181a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,400;0,700;1,400&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="js/boot.js"></script>
+    <script type="module" src="js/glossary.js"></script>
+</head>
+<body>
+    <header class="topbar" id="topbar">
+        <a class="topbar-brand" href="index.html">Worm <span>українською</span></a>
+        <button class="icon-button" id="open-settings" aria-label="Налаштування">
+            <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#sliders"></use></svg>
+        </button>
+    </header>
+
+    <main class="page">
+        <section class="hero hero--compact">
+            <h1 class="hero-title">Глосарій</h1>
+            <p class="hero-lead">Персонажі, команди й терміни. Показано лише тих, кого ви вже зустріли в прочитаних главах.</p>
+        </section>
+        <div id="glossary">
+            <p class="loading">Завантаження…</p>
+        </div>
+    </main>
+</body>
+</html>
