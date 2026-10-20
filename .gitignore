@@ -11,3 +11,6 @@ tts/samples/
 
 # Voiceover work files (tools/voice_chapter.py)
 tts/audio/
+
+# Original English chapter texts for translating (tools/fetch_original.py), local only
+orig/

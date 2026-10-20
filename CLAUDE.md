@@ -22,6 +22,7 @@ The tools in `tools/` are stdlib Python 3.8+ with no dependencies (shared code i
 ```
 python3 tools/check_chapters.py [--fix]          # validate all chapters; --fix also updates firstSeen in names.json
 python3 tools/markup_names.py <id> [--write]     # wrap unmarked names in data-name spans, case taken from the form
+python3 tools/fetch_original.py <id> [--check]  # the original chapter for reference -> orig/<id>.txt (git-ignored, never committed); --check compares paragraph counts with the translation
 python3 tools/export_tts.py <id>                 # voiceover script for ElevenLabs -> tts/<id>.json
 python3 tools/export_tts.py <id> --check tts/<id>.tagged.json
 python3 tools/voice_chapter.py <id> [--chunks 3-4] [--retake 3] [--publish]   # generate / publish the voiceover
@@ -30,7 +31,7 @@ python3 tools/audiopost.py CHUNK.mp3 --chapter <id> --chunk N   # post-process o
 tools/setup.sh                                  # prepare a machine (see "Outside the repository")
 ```
 
-Run the validator before committing changes to chapters or names; it exits with code 1 on errors. Three project skills cover the content workflow: `.claude/skills/translate-chapter` (translate a new chapter straight into the markup), `.claude/skills/tts-tags` (add ElevenLabs audio tags) and `.claude/skills/voice-chapter` (generate, review and publish the voiceover). `ROADMAP.md` tracks planned work. `docs/voiceover-pipeline.md` describes the whole voiceover process and what was learned while building it, in a form the user reuses for other books and game dubbing: keep it current when the pipeline changes.
+Run the validator before committing changes to chapters or names; it exits with code 1 on errors. Three project skills cover the content workflow: `.claude/skills/translate-chapter` (add a chapter from the user's Ukrainian translation: fetch the original for reference, agree the new names, mark up, register and validate; Claude doesn't write the translation itself), `.claude/skills/tts-tags` (add ElevenLabs audio tags) and `.claude/skills/voice-chapter` (generate, review and publish the voiceover). `ROADMAP.md` tracks planned work. `docs/voiceover-pipeline.md` describes the whole voiceover process and what was learned while building it, in a form the user reuses for other books and game dubbing: keep it current when the pipeline changes.
 
 The live site is GitHub Pages for `origin` (`PavelSupenko/worm-uk`, default branch `master`), deployed by `.github/workflows/pages.yml`: the validator runs first and the site only updates when it passes. `tools/build_site.sh` assembles the published files (pages, `js`, `assets`, `texts`, `manifest.webmanifest`, `sw.js`; tools, `tts` and docs are not published; the voiceover lives on R2), runs `tools/build_pages.py` and stamps the commit hash into module, stylesheet, icon and data URLs through `js/version.js`, so browsers never mix files from two deploys. Assume a push to `master` goes live within a few minutes.
 
