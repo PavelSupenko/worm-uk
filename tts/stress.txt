@@ -21,6 +21,71 @@
 лУні
 лУне
 
+# Common words Eleven v4 stressed wrongly (heard in 1.3). Every form, since matching is by whole word.
+# Villain (лиходій): лихОдіїв instead of лиходІїв
+лиходІй
+лиходІя
+лиходІю
+лиходІєві
+лиходІєм
+лиходІї
+лиходІїв
+лиходІям
+лиходІями
+лиходІях
+суперлиходІй
+суперлиходІя
+суперлиходІю
+суперлиходІєві
+суперлиходІєм
+суперлиходІї
+суперлиходІїв
+суперлиходІям
+суперлиходІями
+суперлиходІях
+лиходІйка
+лиходІйки
+лиходІйці
+лиходІйку
+лиходІйкою
+лиходІйко
+лиходІйок
+лиходІйкам
+лиходІйками
+лиходІйках
+# Superhuman (надлюдський): the stress is on the ending, like людськИй; v4 said надлЮдською
+надлюдськИй
+надлюдськОго
+надлюдськОму
+надлюдськИм
+надлюдськІм
+надлюдськА
+надлюдськОї
+надлюдськІй
+надлюдськУ
+надлюдськОю
+надлюдськЕ
+надлюдськІ
+надлюдськИх
+надлюдськИми
+# Distinctive (характЕрний), unlike харАктер; v4 said харАктерний. харАктерний also exists
+# (a character actor's role), but Worm means "distinctive".
+характЕрний
+характЕрного
+характЕрному
+характЕрним
+характЕрнім
+характЕрна
+характЕрної
+характЕрній
+характЕрну
+характЕрною
+характЕрне
+характЕрні
+характЕрних
+характЕрними
+характЕрно
+
 # Names: every form the voiceover reads, so the stress never depends on the model.
 # tools/check_chapters.py warns about a name in a chapter without it.
 # Lung and Bitch are above; their plurals are left out ("луни" is also a form of "луна").
