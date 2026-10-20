@@ -22,7 +22,7 @@ The tools in `tools/` are stdlib Python 3.8+ with no dependencies (shared code i
 ```
 python3 tools/check_chapters.py [--fix]          # validate all chapters; --fix also updates firstSeen in names.json
 python3 tools/markup_names.py <id> [--write]     # wrap unmarked names in data-name spans, case taken from the form
-python3 tools/fetch_original.py <id> [--check]  # the original chapter for reference -> orig/<id>.txt (git-ignored, never committed); --check compares paragraph counts with the translation
+python3 tools/fetch_original.py <id> [--check]  # the original chapter for reference -> orig/<id>.txt (git-ignored, never committed); --check compares paragraph counts with the translation, --check-draft checks a plain-text draft `orig/<id>.uk.txt` (format in `docs/translation-brief.md`)
 python3 tools/export_tts.py <id>                 # voiceover script for ElevenLabs -> tts/<id>.json
 python3 tools/export_tts.py <id> --check tts/<id>.tagged.json
 python3 tools/voice_chapter.py <id> [--chunks 3-4] [--retake 3] [--publish]   # generate / publish the voiceover

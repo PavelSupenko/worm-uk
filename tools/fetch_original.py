@@ -2,7 +2,8 @@
 """Download the original English text of a Worm chapter, for translating it.
 
     python3 tools/fetch_original.py 1.6              # -> orig/1.6.txt
-    python3 tools/fetch_original.py 1.6 --check      # paragraph count of orig/1.6.txt vs the translation
+    python3 tools/fetch_original.py 1.6 --check      # paragraph count of orig/1.6.txt vs the translation in texts/
+    python3 tools/fetch_original.py 1.6 --check-draft [PATH]   # a plain-text translation (default orig/1.6.uk.txt) vs the original
     python3 tools/fetch_original.py --list [ARC]     # chapters of the table of contents (one arc, or all)
     python3 tools/fetch_original.py 4.y --url URL    # a chapter the table of contents lists ambiguously
 
@@ -23,6 +24,7 @@ import time
 import urllib.error
 import urllib.request
 from html.parser import HTMLParser
+from pathlib import Path
 
 from chapterlib import ROOT, find_chapter
 
@@ -262,6 +264,59 @@ def check(chapter_id):
     return 0
 
 
+def read_numbered(path):
+    """Reads an original (N<tab>text) or a draft translation (N. text): returns
+    ([(number or SCENE_BREAK, text)], problems). Header lines start with #."""
+    items, problems = [], []
+    for line_number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        if line == SCENE_BREAK:
+            items.append((SCENE_BREAK, ''))
+            continue
+        match = re.match(r'(\d+)(?:\.|\t)\s*(.*)$', line)
+        if match:
+            items.append((int(match.group(1)), match.group(2)))
+        else:
+            problems.append(f'line {line_number}: no paragraph number (a paragraph split in two?)')
+    return items, problems
+
+
+def check_draft(chapter_id, draft=None):
+    """Compares a plain-text translation with the original: the same numbers in
+    the same order, the same scene breaks, no empty paragraphs, and the same
+    number of <i> runs and line breaks in every paragraph."""
+    original_path = OUT_DIR / f'{chapter_id}.txt'
+    draft_path = Path(draft) if draft else OUT_DIR / f'{chapter_id}.uk.txt'
+    for path in (original_path, draft_path):
+        if not path.is_file():
+            raise SystemExit(f'{path} not found')
+    original, _ = read_numbered(original_path)
+    translated, problems = read_numbered(draft_path)
+    paragraphs = lambda items: sum(1 for key, _ in items if key != SCENE_BREAK)
+    print(f'{chapter_id}: {paragraphs(original)} paragraphs in the original, {paragraphs(translated)} in the draft')
+    for position, (a, b) in enumerate(zip(original, translated), 1):
+        if a[0] != b[0]:
+            problems.append(f'item {position}: the original has {a[0]}, the draft has {b[0]} (a paragraph merged, split, lost or numbered wrong)')
+            break
+        if a[0] == SCENE_BREAK:
+            continue
+        if not b[1]:
+            problems.append(f'paragraph {a[0]}: empty')
+        for mark in ('<i>', '⏎'):
+            if a[1].count(mark) != b[1].count(mark):
+                problems.append(f'paragraph {a[0]}: {a[1].count(mark)} x {mark} in the original, {b[1].count(mark)} in the draft')
+    if len(original) != len(translated) and not any(p.startswith('item') for p in problems):
+        problems.append(f'{len(original)} items in the original, {len(translated)} in the draft')
+    for problem in problems[:20]:
+        print(f'  {problem}')
+    if len(problems) > 20:
+        print(f'  ... and {len(problems) - 20} more')
+    print(f'{len(problems)} problems')
+    return 1 if problems else 0
+
+
 def list_toc(arc=None):
     for entry in read_toc():
         if arc is None or entry['id'].split('.')[0] == arc:
@@ -278,6 +333,9 @@ def main(args):
     chapter_id = args[0]
     if '--check' in args:
         return check(chapter_id)
+    if '--check-draft' in args:
+        rest = args[args.index('--check-draft') + 1:]
+        return check_draft(chapter_id, rest[0] if rest else None)
     if '--url' in args:
         url = args[args.index('--url') + 1]
     else:

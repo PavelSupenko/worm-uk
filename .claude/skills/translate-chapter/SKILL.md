@@ -5,7 +5,10 @@ description: Add a new chapter of Worm to the site from the user's Ukrainian tra
 
 # Add a translated chapter
 
-The Ukrainian text comes from the user: pasted, or a file or draft in the repository. Don't write a whole
+The Ukrainian text comes from the user: pasted, a file or draft in the repository, or a plain draft
+`orig/<id>.uk.txt` made by another tool following `docs/translation-brief.md` (numbered lines, names left in
+English). Run `python3 tools/fetch_original.py <id> --check-draft` on such a draft first: it must end with
+`0 problems`, otherwise the numbering, a paragraph or an italic run is off. Don't write a whole
 chapter's translation from the original yourself: *Worm* is Wildbow's text, and a full translation
 reproduces it. Your part is everything around the text: the original as a reference, the names, the
 markup and the checks. If the user gives only a chapter number, ask for their translation.
@@ -76,7 +79,7 @@ form `names.json` doesn't have) and let the user decide.
 ## 6. Check
 
 ```
-python3 tools/fetch_original.py <id> --check   # paragraph count against the original
+python3 tools/fetch_original.py <id> --check   # paragraph count of the finished chapter against the original
 python3 tools/markup_names.py <id> --write      # marks names you missed; prints the ones it couldn't decide
 python3 tools/check_chapters.py --fix           # must end with 0 errors and 0 warnings
 ```
