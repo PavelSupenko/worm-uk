@@ -7,5 +7,6 @@
     "Lisa": {"description": "Татлтейл/Наклепниця, дівчина ~16 років; жвава, глузлива", "voiceName": "Ember", "voiceId": "WtA85syCrJwasGeHGH2p", "gainDb": 2.2, "gainVoiceId": "WtA85syCrJwasGeHGH2p"},
     "Madison": {"description": "Медісон Клеменс, 15 років, одна з трійці кривдниць Тейлор; мініатюрна, «мила», грайлива, верескливо-злорадна", "voiceName": "Emmaline", "voiceId": "nDJIICjR9zfJExIFeSCN"},
     "Sophia": {"description": "Софія Гесс, 15 років, одна з трійці кривдниць Тейлор, бігунка; груба, агресивна, зневажлива; вона ж Shadow Stalker. Голос попередній", "voiceName": "Sam", "voiceId": "P7fAh4p4xVfEzGgihOit"},
-    "Alec": {"description": "Регент, хлопець ~16 років; млявий, саркастичний", "voiceName": "Haven Sands", "voiceId": "x8xv0H8Ako6Iw3cKXLoC"}
+    "Alec": {"description": "Регент, хлопець ~16 років; млявий, саркастичний", "voiceName": "Haven Sands", "voiceId": "x8xv0H8Ako6Iw3cKXLoC"},
+    "Armsmaster": {"description": "Зброяр, герой Протекторату, чоловік близько тридцяти; спокійний, упевнений, стриманий голос командира з ноткою поблажливої теплоти", "voiceName": null, "voiceId": null}
 }
