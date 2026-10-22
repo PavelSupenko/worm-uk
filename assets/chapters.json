@@ -31,7 +31,8 @@
             {
                 "id": "1.6",
                 "textFile": "texts/1.gestation/1.6.html",
-                "status": "draft"
+                "status": "draft",
+                "audioFile": "https://pub-63aa60752c1f4a77a9e67681b57193db.r2.dev/1.gestation/1.6-9d46e9c5.mp3"
             }
         ]
     }
