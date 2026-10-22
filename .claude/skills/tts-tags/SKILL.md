@@ -36,7 +36,7 @@ Copy the export and only insert tags into the `text` values.
 - Tags count towards the API limit: every chunk must stay at or under 2000 characters including tags.
 - Stress: Eleven v4 follows a stress mark (U+0301) placed right after the stressed vowel. Words from
   `tts/stress.txt` already carry it. Where a word in this chapter is likely to be stressed wrongly,
-  above all homographs whose stress depends on the meaning (за́мок/замо́к, уку́си/укуси́), add the mark in that
+  above all homographs whose stress depends on the meaning (за́мок/замо́к, уку́си/укуси́, бі́йці "in a fight"/бійці́ "fighters", доро́га/дорога́, бо́са "boss"/боса́), add the mark in that
   input; `--check` ignores stress marks. A word that is always stressed the same way belongs in
   `tts/stress.txt` instead (one word per line, the stressed vowel in capitals).
 
