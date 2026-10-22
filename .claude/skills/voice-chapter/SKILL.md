@@ -70,7 +70,7 @@ run it in the background.
 
 ## 5. Listen and fix
 
-- Open the result for the user: `open tts/audio/<id>/<id>.mp3`. Single chunks are `chunk-NN.mp3`.
+- Give the user the path `tts/audio/<id>/<id>.mp3` (single chunks are `chunk-NN.mp3`); don't open it or its folder, the user opens it when convenient.
 - When the user points at a moment, find the chunk from `timings.json` (paragraph start times) and the
   chunk ranges in the tagged script.
 - Fix by changing tags in that chunk of `tts/<id>.tagged.json` (re-run the `--check`), then run the
