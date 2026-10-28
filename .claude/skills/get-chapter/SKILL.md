@@ -13,7 +13,8 @@ The user translates the chapter themselves. The skill works in two stages:
 2. **The translation is there**: pasted, a file in the repository, or a plain draft `orig/<id>.uk.txt` in the
    format of `docs/translation-brief.md` (numbered lines, names left in English). Run
    `python3 tools/fetch_original.py <id> --check-draft` on such a draft first: it must end with `0 problems`,
-   otherwise the numbering, a paragraph or an italic run is off. Then steps 2–8.
+   otherwise the numbering, a paragraph or an italic run is off. If the user wants an editor's pass, run the
+   `proofread-chapter` skill on the draft before the markup. Then steps 2–8.
 
 Don't translate the chapter yourself and don't paste the original into the chat: *Worm* is Wildbow's text,
 and a full translation reproduces it. Your part is everything around the text: the original as a reference,
