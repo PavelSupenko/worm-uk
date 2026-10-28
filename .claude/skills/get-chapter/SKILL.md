@@ -1,19 +1,25 @@
 ---
-name: translate-chapter
-description: Add a new chapter of Worm to the site from the user's Ukrainian translation - fetch the original for reference, propose the new names for approval, mark the text up (narrator, voices, replaceable names), register and validate it. Use when the user gives a translated chapter or asks to add, mark up or prepare a new chapter.
+name: get-chapter
+description: Get a new chapter of Worm onto the site - fetch the original from the web as numbered lines for the user to translate, propose the new names for approval, then mark the user's Ukrainian translation up (narrator, voices, replaceable names), register and validate it. Use when the user names the next chapter to work on, gives a translated chapter or asks to add, mark up or prepare a new chapter.
 ---
 
-# Add a translated chapter
+# Get a chapter onto the site
 
-The Ukrainian text comes from the user: pasted, a file or draft in the repository, or a plain draft
-`orig/<id>.uk.txt` made by another tool following `docs/translation-brief.md` (numbered lines, names left in
-English). Run `python3 tools/fetch_original.py <id> --check-draft` on such a draft first: it must end with
-`0 problems`, otherwise the numbering, a paragraph or an italic run is off. Don't write a whole
-chapter's translation from the original yourself: *Worm* is Wildbow's text, and a full translation
-reproduces it. Your part is everything around the text: the original as a reference, the names, the
-markup and the checks. If the user gives only a chapter number, ask for their translation.
+The user translates the chapter themselves. The skill works in two stages:
 
-## 1. Get the original for reference
+1. **Only a chapter number, no translation yet**: fetch the original (step 1), propose the new names and,
+   for a new arc, the arc title (steps 3–4), and tell the user that `orig/<id>.txt` is ready to translate.
+   Stop there.
+2. **The translation is there**: pasted, a file in the repository, or a plain draft `orig/<id>.uk.txt` in the
+   format of `docs/translation-brief.md` (numbered lines, names left in English). Run
+   `python3 tools/fetch_original.py <id> --check-draft` on such a draft first: it must end with `0 problems`,
+   otherwise the numbering, a paragraph or an italic run is off. Then steps 2–8.
+
+Don't translate the chapter yourself and don't paste the original into the chat: *Worm* is Wildbow's text,
+and a full translation reproduces it. Your part is everything around the text: the original as a reference,
+the names, the markup and the checks.
+
+## 1. Get the original
 
 ```
 python3 tools/fetch_original.py <id>           # -> orig/<id>.txt, one numbered line per paragraph
@@ -35,7 +41,7 @@ of the arc (`texts/1.gestation/`).
 ## 3. Where the chapter goes
 
 - File: `texts/<arc number>.<english arc name in lowercase>/<chapter id>.html`, e.g. `texts/2.insinuation/2.1.html`. Interludes use the id `<arc>.x` (more interludes in one arc: ask the user for the id).
-- A new arc also needs an arc entry in `assets/chapters.json` with a Ukrainian `title`. Propose the title and ask the user to confirm it.
+- A new arc also needs an arc entry in `assets/chapters.json` with a Ukrainian `title`. Propose the title and ask the user to confirm it. Translate the English word closely (Gestation → Визрівання, Insinuation → Натяк) instead of describing the arc's plot: the story later reveals that the arc titles are stages of a life cycle.
 
 ## 4. Names: propose, wait for approval
 
