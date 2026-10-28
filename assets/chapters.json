@@ -48,6 +48,11 @@
                 "id": "2.1",
                 "textFile": "texts/2.insinuation/2.1.html",
                 "audioFile": "https://pub-63aa60752c1f4a77a9e67681b57193db.r2.dev/2.insinuation/2.1-1a6f0023.mp3"
+            },
+            {
+                "id": "2.2",
+                "textFile": "texts/2.insinuation/2.2.html",
+                "status": "draft"
             }
         ]
     }
