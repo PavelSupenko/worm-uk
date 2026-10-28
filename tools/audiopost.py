@@ -52,6 +52,9 @@ MAX_GAIN_DB = 8.0        # never move a voice by more than this
 TARGET_LUFS = -18.0      # usual loudness for spoken-word audio
 LIMITER_DB = -2.0        # sample-peak ceiling, keeps the true peak of the MP3 under -1 dBTP
 MIN_COVERAGE = 0.85      # below this share of aligned words a chunk is left as it is
+# Word timestamps from whisper.cpp. "-mc 0" drops the previous window's text from the
+# prompt: with it whisper skipped a whole line of Danny's in 2.1 (chunk 2)
+WHISPER_ARGS = ['-l', 'uk', '-ml', '1', '-sow', '-dtw', 'large.v3.turbo', '-mc', '0', '-np']
 BITRATE = '64k'
 WORD = re.compile(r"[\w'’ʼ]+")
 PAUSE_AT_START = re.compile(r'^\s*\[[^\]]*pause[^\]]*\]', re.IGNORECASE)
@@ -78,8 +81,8 @@ def transcribe(audio):
         wav = Path(tmp) / 'audio.wav'
         subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', str(audio), '-ar', '16000', '-ac', '1',
                         '-c:a', 'pcm_s16le', str(wav)], check=True)
-        subprocess.run(['whisper-cli', '-m', str(MODEL), '-l', 'uk', '-f', str(wav), '-ojf', '-ml', '1', '-sow',
-                        '-dtw', 'large.v3.turbo', '-np', '-of', str(Path(tmp) / 'out')],
+        subprocess.run(['whisper-cli', '-m', str(MODEL), *WHISPER_ARGS, '-f', str(wav), '-ojf',
+                        '-of', str(Path(tmp) / 'out')],
                        check=True, capture_output=True)
         segments = json.loads((Path(tmp) / 'out.json').read_text())['transcription']
     result = []

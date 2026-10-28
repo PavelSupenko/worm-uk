@@ -142,9 +142,10 @@ def save_voices(voices):
 
 
 def analysis_of(work, n, chunk):
-    """Alignment of chunk n, cached in align-NN.json by audio and text."""
+    """Alignment of chunk n, cached in align-NN.json by audio, text and whisper settings."""
     audio = work / f'chunk-{n:02}.mp3'
-    key = sha256(audio.read_bytes() + json.dumps([i['text'] for i in chunk['inputs']], ensure_ascii=False).encode())
+    key = sha256(audio.read_bytes() + json.dumps([[i['text'] for i in chunk['inputs']], audiopost.WHISPER_ARGS],
+                                                 ensure_ascii=False).encode())
     cache = work / f'align-{n:02}.json'
     if cache.is_file():
         cached = json.loads(cache.read_text())
