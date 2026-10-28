@@ -39,5 +39,16 @@
                 "audioFile": "https://pub-63aa60752c1f4a77a9e67681b57193db.r2.dev/1.gestation/1.x-8040759b.mp3"
             }
         ]
+    },
+    {
+        "id": "2",
+        "title": "Натяк",
+        "chapters": [
+            {
+                "id": "2.1",
+                "textFile": "texts/2.insinuation/2.1.html",
+                "status": "draft"
+            }
+        ]
     }
 ]
