@@ -84,16 +84,8 @@ run it in the background.
 
 ## 6. Publish (only after the user approves the recording)
 
-```
-python3 tools/voice_chapter.py <id> --publish
-python3 tools/check_chapters.py
-```
-
-This uploads the MP3 to R2 under a content-hashed name, writes `assets/timings/<id>.json` and points
-`audioFile` in `assets/chapters.json` at the R2 URL. Commit the tagged script, `chapters.json`, the
-timings and `tts/voices.json` if gains were calibrated ("Add voiceover for <id>"), push, and check
-after the deploy that the live `chapters.json` points at the new file and R2 serves it with the site's
-CORS header.
+Follow the `publish-chapter` skill: upload to R2, notes from listening, the draft mark off, commit,
+push and a check of the live site.
 
 Anything learned while voicing (a tag that works, a pronunciation trick, a new rule) goes into
 `docs/voiceover-pipeline.md` and, if it is a rule for the agent, into the `tts-tags` skill.
