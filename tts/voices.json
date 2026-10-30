@@ -12,6 +12,6 @@
     "Danny": {"description": "Денні Еберт, батько Тейлор, за сорок; оповідач інтерлюдії 1.x від третьої особи. Втомлений, стриманий, тривожний; гнів тримає в собі, тепло проривається крізь утому", "voiceName": "Ollie", "voiceId": "jRAAK67SEFE9m7ci5DhD", "gainDb": 0.5, "gainVoiceId": "jRAAK67SEFE9m7ci5DhD"},
     "Documentary": {"description": "Диктор документального фільму про паралюдей по телевізору; рівний, поважний, трохи урочистий тон", "voiceName": "Clyde", "voiceId": "wyWA56cQNU2KqUW4eCsI", "gainDb": 0.6, "gainVoiceId": "wyWA56cQNU2KqUW4eCsI"},
     "Grace": {"description": "Грейс Лендс, літня жінка, очевидиця появи Сіона 1982 року; розповідає на камеру, зворушено, місцями крізь сльози", "voiceName": "Johanna", "voiceId": "F6nGuJbivpy6qJE45XFS", "gainDb": 1.3, "gainVoiceId": "F6nGuJbivpy6qJE45XFS"},
-    "Greg": {"description": "Грег, однокласник Тейлор, хлопець 15 років; говорить швидко, захоплено й без пауз, перескакує з теми на тему, трохи незграбний", "voiceName": null, "voiceId": null},
-    "Julia": {"description": "Джулія, подруга Медісон, дівчина 15 років, з популярних; зверхня, говорить з відразою", "voiceName": null, "voiceId": null}
+    "Greg": {"description": "Грег, однокласник Тейлор, хлопець 15 років; говорить швидко, захоплено й без пауз, перескакує з теми на тему, трохи незграбний", "voiceName": "Dan", "voiceId": "DvhK1yIWv9GpUpAD6dsU", "gainDb": -5.2, "gainVoiceId": "DvhK1yIWv9GpUpAD6dsU"},
+    "Julia": {"description": "Джулія, подруга Медісон, дівчина 15 років, з популярних; зверхня, говорить з відразою", "voiceName": "Verity", "voiceId": "oW8bn5YtBB89X2nJ0DT9"}
 }
