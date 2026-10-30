@@ -138,6 +138,20 @@
 рЕйчел
 # Winslow High
 вІнслоу
+# Sparky
+спАркі
+# Greg
+грЕга
+грЕге
+грЕгові
+грЕгом
+грЕгу
+# Julia
+джУлія
+джУліє
+джУлію
+джУлії
+джУлією
 
 # Capes, groups and terms (localized forms from assets/names.json)
 # Armsmaster
