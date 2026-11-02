@@ -611,3 +611,27 @@
 найймовІрніше
 імовІрніше
 ймовІрніше
+
+# Heard wrong in 2.3. Every form, since matching is by whole word.
+# Groan (стогнати): стОгнали instead of стогнАли. The present is stressed on the root (стОгне), so only the infinitive and the past.
+стогнАти
+стогнАв
+стогнАла
+стогнАло
+стогнАли
+застогнАти
+застогнАв
+застогнАла
+застогнАло
+застогнАли
+# Snitch, a girl (стукачка): стУкачці instead of стукАчці
+стукАчка
+стукАчки
+стукАчці
+стукАчку
+стукАчкою
+стукАчко
+стукАчок
+стукАчкам
+стукАчками
+стукАчках
